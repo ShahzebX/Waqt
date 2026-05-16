@@ -44,8 +44,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.model.Prayer
@@ -191,8 +192,8 @@ internal fun HomeScreenContent(
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     item {
                         DateHeader(
@@ -263,10 +264,10 @@ private fun DateHeader(
     gregorianDate: String,
     hijriDate: String
 ) {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = gregorianDate,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
@@ -287,42 +288,46 @@ private fun NextPrayerCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Next Prayer",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = prayerName,
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onPrimary
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = prayerTime,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = countdown,
                 modifier = Modifier.testTag(HomeCountdownTag),
-                style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontFamily = FontFamily.Monospace,
+                    fontFeatureSettings = "tnum",
+                    letterSpacing = 0.sp
+                ),
                 color = MaterialTheme.colorScheme.secondary
             )
         }
@@ -335,7 +340,7 @@ private fun PrayerTimesRow(
     activePrayerName: String?
 ) {
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(prayers, key = { it.name }) { prayer ->
             val active = prayer.name == activePrayerName
@@ -352,33 +357,33 @@ private fun PrayerTimePill(
     prayer: Prayer,
     active: Boolean
 ) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(16.dp)
     val borderColor = if (active) {
         MaterialTheme.colorScheme.secondary
     } else {
         MaterialTheme.colorScheme.outline
     }
     val containerColor = if (active) {
-        MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+        MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        MaterialTheme.colorScheme.surface
     }
 
     Column(
         modifier = Modifier
             .background(containerColor, shape)
             .border(width = 1.dp, color = borderColor, shape = shape)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = prayer.name,
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = formatPrayerTime(prayer.time),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -397,7 +402,7 @@ private fun PlannerSummaryCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -407,18 +412,31 @@ private fun PlannerSummaryCard(
             color = MaterialTheme.colorScheme.outline
         )
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
+            Text(
+                text = "Today's Study Plan",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = blockLabel,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            TextButton(
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
                 onClick = onViewPlanner,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.secondary
-                )
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
+                ),
             ) {
-                Text(text = "View Planner")
+                Text(
+                    text = "View Planner",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }

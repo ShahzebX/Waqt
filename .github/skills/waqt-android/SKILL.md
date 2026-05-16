@@ -40,10 +40,14 @@ Build the Waqt (وقت) prayer-times and study-planner app using Jetpack Compose
    - Qibla: Canvas compass.
    - Settings: location, calculation method, notifications, display.
 8. **Design constraints (must follow)**:
-   - Use the "Serene Alignment" color palette from `design.md`.
+   - Use the "Midnight Blue & Gold" palette from `design.md`.
+   - Primary/Headers/Icons: #0F172A. Background: #F8FAFC. Surface: #DBEAFE. Highlight/CTA: #D97706.
+   - Typography: Plus Jakarta Sans. Countdown and prayer times must use tabular numerals.
+   - Layout: 8px grid, 16px horizontal margins, 24px spacing between major sections.
+   - Components: cards use Soft Ice Blue with a 1px outline (#CBD5E1); primary actions use Warm Gold.
    - STRICT: Do not use red/amber for tasks; error red is strictly for system failures.
    - STRICT: Do not use bottom sheets or dialogs for the Planner. You MUST use inline quick-add fields.
-   - Tabular numerals must be used for the countdown.
+   - Timeline: TertiaryIce vertical line with circular prayer anchors.
    - Use BottomNavigationBar; no hamburger menus.
 9. **Permissions + privacy handling**:
    - Implement only required permissions for selected features (INTERNET, ACCESS_FINE_LOCATION/ACCESS_COARSE_LOCATION, POST_NOTIFICATIONS for Android 13+, RECEIVE_BOOT_COMPLETED for notification restore).
