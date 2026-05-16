@@ -18,7 +18,7 @@ Build the Waqt (وقت) prayer-times and study-planner app using Jetpack Compose
 ## Required References
 
 - Build plan: [waqt_build_plan.html](./references/waqt_build_plan.html)
-- Design system: [waqt_design.md](./references/waqt_design.md)
+- Design system: [design.md](./references/design.md)
 
 ## Procedure
 
@@ -35,29 +35,33 @@ Build the Waqt (وقت) prayer-times and study-planner app using Jetpack Compose
    - Generate study slots from prayer gaps using the build plan algorithm.
    - Use inline quick-add fields (no bottom sheets) in Planner screen.
 7. **Compose UI**:
-   - Home: Next prayer hero card, prayer row, planner summary.
-   - Planner: timeline with prayer anchors and study blocks.
-   - Qibla: Canvas compass with smooth rotation.
+   - Home: Hero card, lazy row, summary.
+   - Planner: Vertical timeline.
+   - Qibla: Canvas compass.
    - Settings: location, calculation method, notifications, display.
 8. **Design constraints (must follow)**:
-   - No red/amber for tasks; error red is only for system failures.
-   - Use Material 3 color palette and typography from `waqt_design.md`.
-   - Use BottomNavigationBar; no drawers/hamburger menus.
-   - Countdown must use `LaunchedEffect` and tabular numerals.
+   - Use the "Serene Alignment" color palette from `design.md`.
+   - STRICT: Do not use red/amber for tasks; error red is strictly for system failures.
+   - STRICT: Do not use bottom sheets or dialogs for the Planner. You MUST use inline quick-add fields.
+   - Tabular numerals must be used for the countdown.
+   - Use BottomNavigationBar; no hamburger menus.
 9. **Permissions + privacy handling**:
    - Implement only required permissions for selected features (INTERNET, ACCESS_FINE_LOCATION/ACCESS_COARSE_LOCATION, POST_NOTIFICATIONS for Android 13+, RECEIVE_BOOT_COMPLETED for notification restore).
    - Request runtime permissions in context with clear rationale; when denied, keep functional fallbacks (e.g., manual city input when location access is denied).
    - Declare compass sensor capability as optional and handle unsupported/low-accuracy sensor states gracefully in UI.
    - Keep user data minimal and local-first: do not log precise location/task content unnecessarily and do not send personal data beyond what the prayer-time API requires.
 10. **Testing + verification requirements**:
-   - Add/update unit tests for planner slot generation, ViewModel state transitions, API parsing, and repository cache fallback behavior.
-   - Add/update Compose UI tests for critical flows (Home countdown render, Planner inline quick-add, Settings toggles, and denied-permission fallback states).
-   - Validate integration paths for Room read/write, offline fallback, and notification scheduling trigger behavior.
-   - For permission-dependent features, verify both grant and deny paths, first-run prompts, and post-denial recovery from Settings.
+
+- Add/update unit tests for planner slot generation, ViewModel state transitions, API parsing, and repository cache fallback behavior.
+- Add/update Compose UI tests for critical flows (Home countdown render, Planner inline quick-add, Settings toggles, and denied-permission fallback states).
+- Validate integration paths for Room read/write, offline fallback, and notification scheduling trigger behavior.
+- For permission-dependent features, verify both grant and deny paths, first-run prompts, and post-denial recovery from Settings.
+
 11. **Definition of done before output**:
-   - Build succeeds and relevant existing test suites pass.
-   - New or changed logic has matching test coverage.
-   - Offline mode, denied permissions, and missing compass sensor behavior are explicitly verified.
+
+- Build succeeds and relevant existing test suites pass.
+- New or changed logic has matching test coverage.
+- Offline mode, denied permissions, and missing compass sensor behavior are explicitly verified.
 
 ## Output Expectations
 

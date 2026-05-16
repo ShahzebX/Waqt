@@ -2,13 +2,12 @@ package com.example.waqt.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val PrimaryGreen = Color(0xFF1B6B4A)
-val PrimaryGreenLight = Color(0xFFEAF3ED)
-val DarkGreen = Color(0xFF0F3D2B)
-val AppBackground = Color(0xFFF7F5F0)
+val AppBackground = Color(0xFFF8FAFC)
+val PrimaryNavy = Color(0xFF0F172A)
+val SecondaryGold = Color(0xFFD97706)
+val TertiaryIce = Color(0xFFDBEAFE)
 val SurfaceColor = Color(0xFFFFFFFF)
-val Surface2Color = Color(0xFFF0EDE8)
-val BorderColor = Color(0xFFE2DDD6)
-val TextPrimary = Color(0xFF1A1714)
-val TextMuted = Color(0xFF7A7470)
-val ErrorColor = Color(0xFFC0392B)
+val TextPrimary = Color(0xFF0F172A)
+val TextMuted = Color(0xFF475569)
+val BorderColor = Color(0xFFCBD5E1)
+val ErrorColor = Color(0xFFB3261E)

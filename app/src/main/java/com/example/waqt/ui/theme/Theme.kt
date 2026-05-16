@@ -5,15 +5,17 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val WaqtColorScheme = lightColorScheme(
-    primary = PrimaryGreen,
+    primary = PrimaryNavy,
     onPrimary = SurfaceColor,
-    primaryContainer = PrimaryGreenLight,
-    onPrimaryContainer = PrimaryGreen,
+    primaryContainer = TertiaryIce,
+    onPrimaryContainer = PrimaryNavy,
+    secondary = SecondaryGold,
+    onSecondary = SurfaceColor,
     background = AppBackground,
     onBackground = TextPrimary,
     surface = SurfaceColor,
     onSurface = TextPrimary,
-    surfaceVariant = Surface2Color,
+    surfaceVariant = TertiaryIce,
     onSurfaceVariant = TextMuted,
     outline = BorderColor,
     error = ErrorColor

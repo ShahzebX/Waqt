@@ -39,7 +39,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.model.Prayer
-import com.example.waqt.ui.theme.DarkGreen
 import com.example.waqt.viewmodel.PrayerUiState
 import com.example.waqt.viewmodel.PrayerViewModel
 import com.example.waqt.viewmodel.PrayerViewModelFactory
@@ -134,12 +132,12 @@ internal fun HomeScreenContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkGreen),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         when {
             uiState.isLoading && uiState.prayers.isEmpty() -> CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = MaterialTheme.colorScheme.secondary
             )
             uiState.prayers.isNotEmpty() -> {
                 val displayDate = uiState.prayers.firstOrNull()?.date.toDisplayDate(now.toLocalDate())
@@ -195,7 +193,7 @@ internal fun HomeScreenContent(
             )
             else -> Text(
                 text = "No prayer times loaded.",
-                color = Color.White.copy(alpha = 0.9f)
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
     }
@@ -210,12 +208,12 @@ private fun DateHeader(
         Text(
             text = gregorianDate,
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = hijriDate,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.75f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -230,12 +228,12 @@ private fun NextPrayerCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.10f),
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.18f)
+            color = MaterialTheme.colorScheme.outline
         )
     ) {
         Column(
@@ -247,26 +245,26 @@ private fun NextPrayerCard(
             Text(
                 text = "Next Prayer",
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = 0.75f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = prayerName,
                 style = MaterialTheme.typography.headlineLarge,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = prayerTime,
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.White.copy(alpha = 0.9f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = countdown,
                 modifier = Modifier.testTag(HomeCountdownTag),
                 style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }
@@ -297,15 +295,19 @@ private fun PrayerTimePill(
 ) {
     val shape = RoundedCornerShape(14.dp)
     val borderColor = if (active) {
-        MaterialTheme.colorScheme.primary
+        MaterialTheme.colorScheme.secondary
     } else {
-        Color.White.copy(alpha = 0.24f)
+        MaterialTheme.colorScheme.outline
     }
-    val containerAlpha = if (active) 0.18f else 0.10f
+    val containerColor = if (active) {
+        MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
 
     Column(
         modifier = Modifier
-            .background(Color.White.copy(alpha = containerAlpha), shape)
+            .background(containerColor, shape)
             .border(width = 1.dp, color = borderColor, shape = shape)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.Start
@@ -313,12 +315,12 @@ private fun PrayerTimePill(
         Text(
             text = prayer.name,
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-            color = Color.White
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = formatPrayerTime(prayer.time),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.9f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -338,12 +340,12 @@ private fun PlannerSummaryCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.10f),
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.18f)
+            color = MaterialTheme.colorScheme.outline
         )
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
@@ -354,7 +356,7 @@ private fun PlannerSummaryCard(
             TextButton(
                 onClick = onViewPlanner,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primaryContainer
+                    contentColor = MaterialTheme.colorScheme.secondary
                 )
             ) {
                 Text(text = "View Planner")
@@ -378,12 +380,12 @@ private fun ManualCityFallback(
             .testTag(HomeManualFallbackTag),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.10f),
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.18f)
+            color = MaterialTheme.colorScheme.outline
         )
     ) {
         Column(
@@ -393,13 +395,13 @@ private fun ManualCityFallback(
             Text(
                 text = "Allow location for automatic prayer times",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = message ?: "Or enter your city manually.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.82f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
@@ -409,13 +411,20 @@ private fun ManualCityFallback(
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Button(onClick = onLoadCityPrayerTimes, enabled = city.isNotBlank()) {
+            Button(
+                onClick = onLoadCityPrayerTimes,
+                enabled = city.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
+                )
+            ) {
                 Text(text = "Load by city")
             }
             TextButton(
                 onClick = onRequestLocation,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primaryContainer
+                    contentColor = MaterialTheme.colorScheme.secondary
                 )
             ) {
                 Text(text = "Use GPS instead")
