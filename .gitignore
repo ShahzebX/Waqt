@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+/.github/
+/waqt_build_plan.html
+/waqt_design.md
