@@ -9,7 +9,7 @@ object RetrofitInstance {
     private const val BASE_URL = "https://api.aladhan.com/v1/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BASIC
+        level = HttpLoggingInterceptor.Level.NONE
     }
 
     private val client = OkHttpClient.Builder()

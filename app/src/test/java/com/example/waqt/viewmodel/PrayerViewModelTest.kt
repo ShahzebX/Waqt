@@ -4,6 +4,7 @@ import com.example.waqt.database.PrayerDao
 import com.example.waqt.database.entities.PrayerEntity
 import com.example.waqt.location.GeoCoordinates
 import com.example.waqt.location.LocationProvider
+import com.example.waqt.model.Prayer
 import com.example.waqt.network.AladhanApi
 import com.example.waqt.network.DateInfo
 import com.example.waqt.network.GregorianDate
@@ -13,6 +14,9 @@ import com.example.waqt.network.PrayerData
 import com.example.waqt.network.PrayerResponse
 import com.example.waqt.network.Timings
 import com.example.waqt.repository.PrayerRepository
+import com.example.waqt.settings.InMemoryUserSettingsDataSource
+import com.example.waqt.settings.UserSettings
+import com.example.waqt.worker.PrayerNotificationScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -85,7 +89,10 @@ class PrayerViewModelTest {
         val uiState = viewModel.uiState.value
         assertFalse(uiState.isLoading)
         assertTrue(uiState.requiresManualLocationInput)
-        assertEquals("Unable to read your location. Enter your city manually.", uiState.errorMessage)
+        assertEquals(
+            "Allow location to auto-load prayer times, or enter your city manually.",
+            uiState.errorMessage
+        )
         assertTrue(uiState.prayers.isEmpty())
     }
 
@@ -105,9 +112,28 @@ class PrayerViewModelTest {
         assertEquals(5, uiState.prayers.size)
     }
 
+    @Test
+    fun `successful load schedules notifications when enabled`() = runTest(dispatcher) {
+        val scheduler = RecordingScheduler()
+        val viewModel = createViewModel(
+            api = FakeAladhanApi(response = samplePrayerResponse()),
+            notificationScheduler = scheduler
+        )
+
+        viewModel.loadPrayerTimesByCity("Karachi")
+        advanceUntilIdle()
+
+        assertEquals(1, scheduler.scheduledBatches)
+        assertEquals(5, scheduler.lastBatchSize)
+    }
+
     private fun createViewModel(
         locationProvider: LocationProvider = FakeLocationProvider(Result.success(GeoCoordinates(24.8607, 67.0011))),
-        api: AladhanApi = FakeAladhanApi(response = samplePrayerResponse())
+        api: AladhanApi = FakeAladhanApi(response = samplePrayerResponse()),
+        settingsDataSource: InMemoryUserSettingsDataSource = InMemoryUserSettingsDataSource(
+            UserSettings(notificationsEnabled = true)
+        ),
+        notificationScheduler: PrayerNotificationScheduler = RecordingScheduler()
     ): PrayerViewModel {
         val repository = PrayerRepository(
             api = api,
@@ -115,7 +141,9 @@ class PrayerViewModelTest {
         )
         return PrayerViewModel(
             repository = repository,
-            locationProvider = locationProvider
+            locationProvider = locationProvider,
+            settingsDataSource = settingsDataSource,
+            notificationScheduler = notificationScheduler
         )
     }
 }
@@ -154,6 +182,16 @@ private class FakePrayerDao : PrayerDao {
 
     override suspend fun getPrayersByDate(date: String): List<PrayerEntity> {
         return stored.filter { it.date == date }.sortedBy { it.epochMs }
+    }
+}
+
+private class RecordingScheduler : PrayerNotificationScheduler {
+    var scheduledBatches: Int = 0
+    var lastBatchSize: Int = 0
+
+    override suspend fun schedule(prayers: List<Prayer>) {
+        scheduledBatches += 1
+        lastBatchSize = prayers.size
     }
 }
 

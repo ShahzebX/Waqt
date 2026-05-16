@@ -15,7 +15,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,12 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardActions
-import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.viewmodel.PlannerUiState
@@ -319,26 +320,34 @@ private fun TaskList(tasks: List<String>) {
                     color = MaterialTheme.colorScheme.outline
                 )
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .size(10.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = CircleShape
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = task,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
+                            .align(Alignment.CenterStart)
+                            .padding(end = 56.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = task,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     TextButton(
+                        modifier = Modifier.align(Alignment.CenterEnd),
                         onClick = {},
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.secondary

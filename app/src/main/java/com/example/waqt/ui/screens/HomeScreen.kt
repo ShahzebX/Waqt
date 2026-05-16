@@ -3,6 +3,7 @@ package com.example.waqt.ui.screens
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -33,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.model.Prayer
+import com.example.waqt.repository.PrayerRepository
 import com.example.waqt.viewmodel.PrayerUiState
 import com.example.waqt.viewmodel.PrayerViewModel
 import com.example.waqt.viewmodel.PrayerViewModelFactory
@@ -67,6 +71,21 @@ private val locationPermissions = arrayOf(
 internal const val HomeCountdownTag = "home_countdown"
 internal const val HomeManualFallbackTag = "home_manual_fallback"
 
+private val calculationMethods = listOf(
+    CalculationMethodOption(
+        id = PrayerRepository.METHOD_KARACHI,
+        label = "Karachi"
+    ),
+    CalculationMethodOption(
+        id = PrayerRepository.METHOD_ISNA,
+        label = "ISNA"
+    ),
+    CalculationMethodOption(
+        id = PrayerRepository.METHOD_MWL,
+        label = "MWL"
+    )
+)
+
 @Composable
 fun HomeScreen(
     onViewPlanner: () -> Unit = {}
@@ -74,8 +93,10 @@ fun HomeScreen(
     val context = LocalContext.current
     val prayerViewModel: PrayerViewModel = viewModel(factory = PrayerViewModelFactory(context))
     val uiState by prayerViewModel.uiState.collectAsState()
-    var cityInput by rememberSaveable { mutableStateOf("Karachi") }
-    var permissionRequested by rememberSaveable { mutableStateOf(false) }
+    var cityInput by rememberSaveable(uiState.savedCity) { mutableStateOf(uiState.savedCity) }
+    var selectedMethod by rememberSaveable(uiState.selectedMethod) {
+        mutableIntStateOf(uiState.selectedMethod)
+    }
     var now by remember { mutableStateOf(LocalDateTime.now()) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -83,20 +104,25 @@ fun HomeScreen(
     ) { permissionResult ->
         val locationGranted = permissionResult.values.any { it }
         if (locationGranted) {
-            prayerViewModel.loadPrayerTimesFromCurrentLocation()
+            prayerViewModel.loadPrayerTimesFromCurrentLocation(method = selectedMethod)
         } else {
             prayerViewModel.onLocationPermissionDenied()
         }
     }
 
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            prayerViewModel.onNotificationPermissionDenied()
+        }
+    }
+
     LaunchedEffect(Unit) {
         if (context.hasLocationPermission()) {
-            prayerViewModel.loadPrayerTimesFromCurrentLocation()
-        } else if (!permissionRequested) {
-            permissionRequested = true
-            locationPermissionLauncher.launch(locationPermissions)
+            prayerViewModel.loadPrayerTimesFromCurrentLocation(method = selectedMethod)
         } else {
-            prayerViewModel.onLocationPermissionDenied()
+            prayerViewModel.onLocationPermissionRequired()
         }
     }
 
@@ -110,10 +136,23 @@ fun HomeScreen(
     HomeScreenContent(
         uiState = uiState,
         city = cityInput,
+        selectedMethod = selectedMethod,
         now = now,
         onCityChange = { cityInput = it },
-        onLoadCityPrayerTimes = { prayerViewModel.loadPrayerTimesByCity(cityInput) },
+        onMethodChange = { method ->
+            selectedMethod = method
+            prayerViewModel.setCalculationMethod(method)
+        },
+        onLoadCityPrayerTimes = {
+            prayerViewModel.loadPrayerTimesByCity(city = cityInput, method = selectedMethod)
+        },
         onRequestLocation = { locationPermissionLauncher.launch(locationPermissions) },
+        showNotificationPrompt = context.shouldShowNotificationPrompt(uiState),
+        onRequestNotifications = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        },
         onViewPlanner = onViewPlanner
     )
 }
@@ -122,10 +161,14 @@ fun HomeScreen(
 internal fun HomeScreenContent(
     uiState: PrayerUiState,
     city: String,
+    selectedMethod: Int = PrayerRepository.DEFAULT_METHOD,
     now: LocalDateTime,
     onCityChange: (String) -> Unit,
+    onMethodChange: (Int) -> Unit = {},
     onLoadCityPrayerTimes: () -> Unit,
     onRequestLocation: () -> Unit,
+    showNotificationPrompt: Boolean = false,
+    onRequestNotifications: () -> Unit = {},
     onViewPlanner: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -176,13 +219,29 @@ internal fun HomeScreenContent(
                             onViewPlanner = onViewPlanner
                         )
                     }
+                    if (showNotificationPrompt) {
+                        item {
+                            NotificationPermissionCard(onRequestNotifications = onRequestNotifications)
+                        }
+                    }
+                    if (uiState.infoMessage != null) {
+                        item {
+                            Text(
+                                text = uiState.infoMessage,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
             uiState.requiresManualLocationInput -> {
                 ManualCityFallback(
                     city = city,
+                    selectedMethod = selectedMethod,
                     message = uiState.errorMessage,
                     onCityChange = onCityChange,
+                    onMethodChange = onMethodChange,
                     onLoadCityPrayerTimes = onLoadCityPrayerTimes,
                     onRequestLocation = onRequestLocation
                 )
@@ -366,10 +425,52 @@ private fun PlannerSummaryCard(
 }
 
 @Composable
+private fun NotificationPermissionCard(
+    onRequestNotifications: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline
+        )
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Text(
+                text = "Enable prayer reminders",
+                style = MaterialTheme.typography.titleSmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Allow notifications to get reminders 10 minutes before each prayer.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(
+                onClick = onRequestNotifications,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Text(text = "Allow notifications")
+            }
+        }
+    }
+}
+
+@Composable
 private fun ManualCityFallback(
     city: String,
+    selectedMethod: Int,
     message: String?,
     onCityChange: (String) -> Unit,
+    onMethodChange: (Int) -> Unit,
     onLoadCityPrayerTimes: () -> Unit,
     onRequestLocation: () -> Unit
 ) {
@@ -411,6 +512,11 @@ private fun ManualCityFallback(
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(12.dp))
+            CalculationMethodSelector(
+                selectedMethod = selectedMethod,
+                onMethodChange = onMethodChange
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onLoadCityPrayerTimes,
                 enabled = city.isNotBlank(),
@@ -428,6 +534,32 @@ private fun ManualCityFallback(
                 )
             ) {
                 Text(text = "Use GPS instead")
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalculationMethodSelector(
+    selectedMethod: Int,
+    onMethodChange: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Calculation method",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(calculationMethods, key = { it.id }) { method ->
+                FilterChip(
+                    selected = selectedMethod == method.id,
+                    onClick = { onMethodChange(method.id) },
+                    label = { Text(text = method.label) }
+                )
             }
         }
     }
@@ -545,3 +677,22 @@ private fun Context.hasLocationPermission(): Boolean {
     ) == PackageManager.PERMISSION_GRANTED
     return finePermission || coarsePermission
 }
+
+private fun Context.hasNotificationPermission(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+    return ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun Context.shouldShowNotificationPrompt(uiState: PrayerUiState): Boolean {
+    return uiState.prayers.isNotEmpty() &&
+        uiState.notificationsEnabled &&
+        !hasNotificationPermission()
+}
+
+private data class CalculationMethodOption(
+    val id: Int,
+    val label: String
+)
