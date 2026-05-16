@@ -80,7 +80,15 @@ fun WaqtNavGraph(modifier: Modifier = Modifier) {
             startDestination = WaqtDestination.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(WaqtDestination.Home.route) { HomeScreen() }
+            composable(WaqtDestination.Home.route) {
+                HomeScreen(
+                    onViewPlanner = {
+                        navController.navigate(WaqtDestination.Planner.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable(WaqtDestination.Planner.route) { PlannerScreen() }
             composable(WaqtDestination.Qibla.route) { QiblaScreen() }
             composable(WaqtDestination.Settings.route) { SettingsScreen() }
