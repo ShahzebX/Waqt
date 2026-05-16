@@ -1,14 +1,10 @@
 package com.example.waqt.viewmodel
 
-import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.waqt.database.PrayerDao
-import com.example.waqt.database.entities.PrayerEntity
 import com.example.waqt.model.Prayer
-import com.example.waqt.network.RetrofitInstance
 import com.example.waqt.repository.PrayerRepository
+import com.example.waqt.location.LocationProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,29 +14,16 @@ import kotlinx.coroutines.launch
 data class PrayerUiState(
     val prayers: List<Prayer> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val requiresManualLocationInput: Boolean = false
 )
 
-class PrayerViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: PrayerRepository = PrayerRepository(
-        api = RetrofitInstance.api,
-        prayerDao = InMemoryPrayerDao()
-    )
-
+class PrayerViewModel(
+    private val repository: PrayerRepository,
+    private val locationProvider: LocationProvider
+) : ViewModel() {
     private val _uiState = MutableStateFlow(PrayerUiState())
     val uiState: StateFlow<PrayerUiState> = _uiState.asStateFlow()
-    private val _prayers = MutableStateFlow<List<Prayer>>(emptyList())
-    val prayers: StateFlow<List<Prayer>> = _prayers.asStateFlow()
-
-    private var hasLoadedDefaults = false
-
-    fun loadDefaultPrayerTimes() {
-        if (hasLoadedDefaults) {
-            return
-        }
-        hasLoadedDefaults = true
-        loadPrayerTimes(defaultLatitude, defaultLongitude)
-    }
 
     fun loadPrayerTimes(
         latitude: Double,
@@ -48,16 +31,18 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
         method: Int = PrayerRepository.DEFAULT_METHOD
     ) {
         viewModelScope.launch {
-            _uiState.update { current -> current.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { current ->
+                current.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
 
             repository.getPrayerTimes(latitude = latitude, longitude = longitude, method = method)
                 .onSuccess { prayers ->
-                    Log.d(TAG, "Aladhan response received for $latitude,$longitude")
-                    _prayers.value = prayers
                     _uiState.value = PrayerUiState(prayers = prayers, isLoading = false)
                 }
                 .onFailure { throwable ->
-                    Log.e(TAG, "Failed to fetch prayer times", throwable)
                     _uiState.update { current ->
                         current.copy(
                             isLoading = false,
@@ -68,25 +53,95 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    companion object {
-        private const val TAG = "PrayerViewModel"
-        private const val defaultLatitude = 24.8607
-        private const val defaultLongitude = 67.0011
-        private const val defaultErrorMessage = "Could not load prayer times."
-    }
-}
+    fun loadPrayerTimesFromCurrentLocation(
+        method: Int = PrayerRepository.DEFAULT_METHOD
+    ) {
+        viewModelScope.launch {
+            _uiState.update { current ->
+                current.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
 
-private class InMemoryPrayerDao : PrayerDao {
-    private val cachedPrayers = mutableListOf<PrayerEntity>()
-
-    override suspend fun insertPrayers(prayers: List<PrayerEntity>) {
-        prayers.forEach { prayer ->
-            cachedPrayers.removeAll { it.id == prayer.id }
-            cachedPrayers.add(prayer)
+            locationProvider.getCurrentCoordinates()
+                .onSuccess { coordinates ->
+                    loadPrayerTimes(
+                        latitude = coordinates.latitude,
+                        longitude = coordinates.longitude,
+                        method = method
+                    )
+                }
+                .onFailure {
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            requiresManualLocationInput = true,
+                            errorMessage = manualFallbackMessage
+                        )
+                    }
+                }
         }
     }
 
-    override suspend fun getPrayersByDate(date: String): List<PrayerEntity> {
-        return cachedPrayers.filter { it.date == date }.sortedBy { it.epochMs }
+    fun loadPrayerTimesByCity(
+        city: String,
+        country: String = PrayerRepository.DEFAULT_COUNTRY,
+        method: Int = PrayerRepository.DEFAULT_METHOD
+    ) {
+        val normalizedCity = city.trim()
+        if (normalizedCity.isEmpty()) {
+            _uiState.update { current ->
+                current.copy(
+                    isLoading = false,
+                    requiresManualLocationInput = true,
+                    errorMessage = emptyCityMessage
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { current ->
+                current.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    requiresManualLocationInput = true
+                )
+            }
+
+            repository.getPrayerTimesByCity(city = normalizedCity, country = country, method = method)
+                .onSuccess { prayers ->
+                    _uiState.value = PrayerUiState(prayers = prayers, isLoading = false)
+                }
+                .onFailure { throwable ->
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            errorMessage = throwable.message ?: defaultErrorMessage,
+                            requiresManualLocationInput = true
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onLocationPermissionDenied() {
+        _uiState.update { current ->
+            current.copy(
+                isLoading = false,
+                requiresManualLocationInput = true,
+                errorMessage = permissionDeniedMessage
+            )
+        }
+    }
+
+    companion object {
+        private const val defaultErrorMessage = "Could not load prayer times."
+        private const val permissionDeniedMessage =
+            "Location permission denied. Enter your city manually."
+        private const val manualFallbackMessage =
+            "Unable to read your location. Enter your city manually."
+        private const val emptyCityMessage = "Enter a city name."
     }
 }

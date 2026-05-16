@@ -5,11 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.waqt.database.entities.PrayerEntity
+import kotlin.jvm.JvmSuppressWildcards
 
+@JvmSuppressWildcards
 @Dao
 interface PrayerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPrayers(prayers: List<PrayerEntity>)
+    suspend fun insertPrayers(prayers: List<PrayerEntity>): List<Long>
 
     @Query("SELECT * FROM prayers WHERE date = :date ORDER BY epochMs ASC")
     suspend fun getPrayersByDate(date: String): List<PrayerEntity>

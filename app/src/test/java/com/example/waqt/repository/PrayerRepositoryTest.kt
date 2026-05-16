@@ -88,11 +88,12 @@ private class FakePrayerDao(initial: List<PrayerEntity> = emptyList()) : PrayerD
     val insertedPrayers: List<PrayerEntity>
         get() = stored
 
-    override suspend fun insertPrayers(prayers: List<PrayerEntity>) {
+    override suspend fun insertPrayers(prayers: List<PrayerEntity>): List<Long> {
         prayers.forEach { prayer ->
             stored.removeAll { it.id == prayer.id }
             stored.add(prayer)
         }
+        return prayers.mapIndexed { index, _ -> index.toLong() + 1L }
     }
 
     override suspend fun getPrayersByDate(date: String): List<PrayerEntity> {

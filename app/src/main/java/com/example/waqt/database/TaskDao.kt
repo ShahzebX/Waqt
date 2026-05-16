@@ -6,7 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.waqt.database.entities.TaskEntity
 import kotlinx.coroutines.flow.Flow
+import kotlin.jvm.JvmSuppressWildcards
 
+@JvmSuppressWildcards
 @Dao
 interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
