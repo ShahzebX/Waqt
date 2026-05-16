@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waqt — Smart Prayer & Study Planner · Build Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #F7F5F0;
+  --surface:  #FFFFFF;
+  --surface2: #F0EDE8;
+  --border:   #E2DDD6;
+  --border2:  #C8C2B8;
+  --text:     #1A1714;
+  --muted:    #7A7470;
+  --muted2:   #A09890;
+  --s1:       #1B6B4A; /* Stage 1 — forest green */
+  --s1-light: #EAF3ED;
+  --s1-mid:   #C2DFD0;
+  --s2:       #7B4FD4; /* Stage 2 — purple */
+  --s2-light: #F0EBFC;
+  --s2-mid:   #D4C3F5;
+  --api:      #C05A1A;
+  --api-light:#FBF0E8;
+  --warn:     #B45309;
+  --warn-light:#FEF3CD;
+  --code-bg:  #1C1A18;
+  --code-text:#E8E4DE;
+  --kw:       #A78BFA;
+  --str:      #6EE7B7;
+  --cmt:      #6B7280;
+  --fn:       #93C5FD;
+  --type:     #FCD34D;
+  --num:      #FB923C;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.page { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 8rem; }
+
+/* ── HEADER ── */
+.header { margin-bottom: 3.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--border); }
+.eyebrow { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+.app-name { font-family: 'Instrument Serif', serif; font-size: clamp(48px, 8vw, 80px); line-height: 1.0; color: var(--text); margin-bottom: 0.25rem; }
+.app-name em { font-style: italic; color: var(--s1); }
+.app-tagline { font-size: 17px; color: var(--muted); max-width: 560px; line-height: 1.6; margin-bottom: 1.5rem; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { font-family: 'Geist Mono', monospace; font-size: 11px; padding: 4px 12px; border-radius: 999px; border: 1px solid; }
+.pill-green { border-color: var(--s1); color: var(--s1); background: var(--s1-light); }
+.pill-purple { border-color: var(--s2); color: var(--s2); background: var(--s2-light); }
+.pill-orange { border-color: var(--api); color: var(--api); background: var(--api-light); }
+.pill-muted { border-color: var(--border2); color: var(--muted); background: var(--surface2); }
+
+/* ── STAGE BANNERS ── */
+.stage-banner {
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+.stage-banner.s1 { background: var(--s1-light); border: 1px solid var(--s1-mid); }
+.stage-banner.s2 { background: var(--s2-light); border: 1px solid var(--s2-mid); }
+.stage-icon { font-size: 28px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.stage-label { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+.stage-banner.s1 .stage-label { color: var(--s1); }
+.stage-banner.s2 .stage-label { color: var(--s2); }
+.stage-title { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text); margin-bottom: 4px; }
+.stage-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ── SECTIONS ── */
+.section { margin-bottom: 3.5rem; }
+.section-meta { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.section-title { font-family: 'Instrument Serif', serif; font-size: 28px; color: var(--text); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+.section-title .accent-green { color: var(--s1); }
+.section-title .accent-purple { color: var(--s2); }
+
+/* ── CODE ── */
+.code-block { background: var(--code-bg); border-radius: 10px; overflow: hidden; margin: 1rem 0 1.5rem; }
+.code-label { font-family: 'Geist Mono', monospace; font-size: 11px; color: #6B7280; padding: 8px 16px; border-bottom: 1px solid #2A2825; background: #161412; letter-spacing: 0.05em; }
+.code-block pre { font-family: 'Geist Mono', monospace; font-size: 12.5px; line-height: 1.75; padding: 1.25rem 1.5rem; overflow-x: auto; color: var(--code-text); }
+.kw { color: var(--kw); }
+.str { color: var(--str); }
+.cmt { color: var(--cmt); font-style: italic; }
+.fn { color: var(--fn); }
+.tp { color: var(--type); }
+.nm { color: var(--num); }
+
+/* ── CARDS ── */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; }
+.card-label { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted2); margin-bottom: 4px; }
+.card-value { font-size: 14px; color: var(--text); font-weight: 500; }
+.card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── STEPS ── */
+.step-list { list-style: none; }
+.step { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.step:last-child { border-bottom: none; }
+.step-num { font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 600; color: var(--s1); min-width: 28px; padding-top: 2px; }
+.step-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.step-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.step-body code { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--api); background: var(--api-light); padding: 1px 6px; border-radius: 4px; }
+
+/* ── ARCH ── */
+.arch { display: flex; flex-direction: column; gap: 8px; margin: 1rem 0 1.5rem; }
+.arch-row { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.25rem; }
+.arch-name { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted2); min-width: 80px; flex-shrink: 0; }
+.arch-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.arch-item { font-size: 12px; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); }
+.arch-row.ui .arch-item { border-color: #C7D2FE; color: #4338CA; background: #EEF2FF; }
+.arch-row.vm .arch-item { border-color: var(--s1-mid); color: var(--s1); background: var(--s1-light); }
+.arch-row.repo .arch-item { border-color: #FED7AA; color: var(--api); background: var(--api-light); }
+.arch-row.data .arch-item { border-color: var(--border2); color: var(--muted); background: var(--surface2); }
+.arch-arrow { text-align: center; font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--border2); padding: 2px 0; }
+
+/* ── TIMELINE ── */
+.timeline { display: flex; flex-direction: column; }
+.tl-day { display: grid; grid-template-columns: 90px 1fr; gap: 1.5rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+.tl-day:last-child { border-bottom: none; }
+.tl-left { }
+.tl-day-num { font-family: 'Instrument Serif', serif; font-size: 26px; line-height: 1; color: var(--s1); }
+.tl-day-name { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--muted2); letter-spacing: 0.08em; margin-top: 2px; }
+.tl-day.rest .tl-day-num { color: var(--muted2); }
+.tl-day-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.tl-tasks { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.tl-tasks li { font-size: 13px; color: var(--muted); display: flex; gap: 8px; }
+.tl-tasks li::before { content: '→'; font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--s1); flex-shrink: 0; margin-top: 3px; }
+.tl-day.rest { background: var(--surface2); margin: 0 -1rem; padding: 1rem 1rem; border-radius: 8px; }
+
+/* ── CHECKLIST ── */
+.checklist { list-style: none; }
+.check-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); align-items: flex-start; }
+.check-item:last-child { border-bottom: none; }
+.check-box { width: 16px; height: 16px; border: 1.5px solid var(--border2); border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+.check-item strong { color: var(--text); font-weight: 500; }
+
+/* ── NOTES ── */
+.note { background: var(--warn-light); border-left: 3px solid var(--warn); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; font-size: 13px; color: #78350F; margin: 1rem 0; line-height: 1.6; }
+.note strong { color: var(--warn); }
+.tip { background: var(--s1-light); border-left: 3px solid var(--s1); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; font-size: 13px; color: #14532D; margin: 1rem 0; line-height: 1.6; }
+.tip strong { color: var(--s1); }
+.tip-purple { background: var(--s2-light); border-left: 3px solid var(--s2); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; font-size: 13px; color: #4C1D95; margin: 1rem 0; line-height: 1.6; }
+.tip-purple strong { color: var(--s2); }
+
+/* ── TOC ── */
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 3rem; }
+.toc-heading { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted2); margin-bottom: 1.25rem; }
+.toc-group { margin-bottom: 1rem; }
+.toc-group-label { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; display: inline-block; }
+.toc-group-label.s1 { background: var(--s1-light); color: var(--s1); }
+.toc-group-label.s2 { background: var(--s2-light); color: var(--s2); }
+.toc-links { display: flex; flex-direction: column; gap: 4px; }
+.toc-links a { font-size: 13px; color: var(--muted); text-decoration: none; display: flex; gap: 8px; align-items: center; padding: 3px 0; transition: color 0.15s; }
+.toc-links a:hover { color: var(--s1); }
+.toc-n { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--border2); min-width: 28px; }
+
+/* ── FEATURE TABLE ── */
+.feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 13px; }
+.feature-table th { background: var(--surface2); color: var(--muted); font-weight: 500; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.05em; padding: 8px 12px; text-align: left; border: 1px solid var(--border); }
+.feature-table td { padding: 9px 12px; border: 1px solid var(--border); color: var(--muted); vertical-align: top; line-height: 1.5; }
+.feature-table td:first-child { font-weight: 500; color: var(--text); }
+.feature-table tr:nth-child(even) td { background: var(--bg); }
+.badge-s1 { background: var(--s1-light); color: var(--s1); font-size: 10px; padding: 2px 8px; border-radius: 999px; font-family: 'Geist Mono', monospace; white-space: nowrap; }
+.badge-s2 { background: var(--s2-light); color: var(--s2); font-size: 10px; padding: 2px 8px; border-radius: 999px; font-family: 'Geist Mono', monospace; white-space: nowrap; }
+.badge-both { background: var(--api-light); color: var(--api); font-size: 10px; padding: 2px 8px; border-radius: 999px; font-family: 'Geist Mono', monospace; white-space: nowrap; }
+
+p { color: var(--muted); margin-bottom: 1rem; line-height: 1.7; }
+h4 { font-size: 14px; font-weight: 500; color: var(--text); margin: 1.5rem 0 0.6rem; }
+strong { color: var(--text); font-weight: 500; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="header">
+  <p class="eyebrow">Complete 2-Stage Build Plan · Kotlin + Jetpack Compose</p>
+  <h1 class="app-name"><em>Waqt</em></h1>
+  <p class="app-tagline">Smart Prayer & Study Planner — an app that builds your day around your deen, not against it.</p>
+  <div class="pill-row">
+    <span class="pill pill-green">Stage 1 — Semester Submission</span>
+    <span class="pill pill-purple">Stage 2 — Monetize & Publish</span>
+    <span class="pill pill-orange">Aladhan API · Room DB · MVVM</span>
+    <span class="pill pill-muted">Kotlin + Jetpack Compose</span>
+  </div>
+</div>
+
+<!-- STAGE BANNERS -->
+<div class="stage-banner s1">
+  <div class="stage-icon">🎓</div>
+  <div>
+    <p class="stage-label">Stage 1 · 10 Days</p>
+    <p class="stage-title">Build & Submit</p>
+    <p class="stage-desc">A fully working app with API integration, Room database, MVVM architecture, navigation, and a polished UI — everything your teacher wants to see. Demoed and submitted on time.</p>
+  </div>
+</div>
+
+<div class="stage-banner s2">
+  <div class="stage-icon">🚀</div>
+  <div>
+    <p class="stage-label">Stage 2 · After Submission</p>
+    <p class="stage-title">Monetize, Polish & Publish</p>
+    <p class="stage-desc">AdMob ads, in-app billing for premium, home screen widget, Play Store listing, ASO optimisation, and a growth strategy. Your side income starts here.</p>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <p class="toc-heading">Contents</p>
+  <div class="toc-group">
+    <span class="toc-group-label s1">Stage 1 — Submission</span>
+    <div class="toc-links">
+      <a href="#concept"><span class="toc-n">01</span> App concept & features</a>
+      <a href="#setup"><span class="toc-n">02</span> Project setup & dependencies</a>
+      <a href="#arch"><span class="toc-n">03</span> MVVM architecture</a>
+      <a href="#api"><span class="toc-n">04</span> Aladhan API integration</a>
+      <a href="#room"><span class="toc-n">05</span> Room database</a>
+      <a href="#screens"><span class="toc-n">06</span> All screens (Compose)</a>
+      <a href="#planner"><span class="toc-n">07</span> Study planner logic</a>
+      <a href="#timeline"><span class="toc-n">08</span> 10-day sprint timeline</a>
+      <a href="#demo"><span class="toc-n">09</span> Demo day checklist</a>
+    </div>
+  </div>
+  <div class="toc-group">
+    <span class="toc-group-label s2">Stage 2 — Publish & Earn</span>
+    <div class="toc-links">
+      <a href="#admob"><span class="toc-n">10</span> AdMob integration</a>
+      <a href="#billing"><span class="toc-n">11</span> In-app billing (premium)</a>
+      <a href="#widget"><span class="toc-n">12</span> Home screen widget</a>
+      <a href="#playstore"><span class="toc-n">13</span> Play Store publishing</a>
+      <a href="#growth"><span class="toc-n">14</span> Growth & monetization strategy</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── STAGE 1 ─────────────────────────────── -->
+
+<!-- 01 CONCEPT -->
+<div class="section" id="concept">
+  <p class="section-meta">01 · Stage 1</p>
+  <h2 class="section-title">App Concept & <span class="accent-green">Features</span></h2>
+
+  <p><strong>Waqt</strong> (وقت — "time" in Urdu) is a daily planner that fetches your prayer times automatically, then helps you build study sessions, tasks, and breaks in the gaps between prayers. The prayers are fixed anchors — everything else flows around them.</p>
+
+  <table class="feature-table">
+    <thead>
+      <tr><th>Feature</th><th>What it does</th><th>Stage</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Prayer times</td><td>Fetches today's 5 prayer times from Aladhan API based on device location</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Countdown timer</td><td>Live countdown to the next prayer, updates every second</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Daily planner</td><td>Time-blocked schedule auto-generated with study slots between prayers</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Task manager</td><td>Add tasks, assign to a time slot, mark done — persisted in Room DB</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Prayer notifications</td><td>Push notification 10 min before each prayer via WorkManager</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Qibla compass</td><td>Custom Canvas drawn compass using device sensors, points to Makkah</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Settings</td><td>Manual city override, calculation method (MWL/ISNA/Karachi), Madhab</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>AdMob banner</td><td>Non-intrusive banner ad on home screen</td><td><span class="badge-s2">Stage 2</span></td></tr>
+      <tr><td>Premium upgrade</td><td>Ad-free + custom themes + widget via one-time in-app purchase</td><td><span class="badge-s2">Stage 2</span></td></tr>
+      <tr><td>Home screen widget</td><td>4×2 widget showing next prayer + countdown on the home screen</td><td><span class="badge-s2">Stage 2</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="tip"><strong>Why "Waqt" impresses your teacher:</strong> It covers an API network call, device sensor (compass), local database (Room), background scheduling (WorkManager), navigation between 4+ screens, and live UI updates — all in one clean app. That's a comprehensive project, not a toy.</div>
+</div>
+
+<!-- 02 SETUP -->
+<div class="section" id="setup">
+  <p class="section-meta">02 · Stage 1</p>
+  <h2 class="section-title">Project Setup & <span class="accent-green">Dependencies</span></h2>
+
+  <div class="card-grid">
+    <div class="card"><div class="card-label">Project name</div><div class="card-value">Waqt</div></div>
+    <div class="card"><div class="card-label">Package</div><div class="card-value">com.waqt.planner</div></div>
+    <div class="card"><div class="card-label">Min SDK</div><div class="card-value">API 26</div><div class="card-sub">Android 8.0+, 95% coverage</div></div>
+    <div class="card"><div class="card-label">Language</div><div class="card-value">Kotlin + Compose</div></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">app/build.gradle.kts — all dependencies</div>
+    <pre><span class="kw">val</span> composeBom = platform(<span class="str">"androidx.compose:compose-bom:2024.05.00"</span>)
+implementation(composeBom)
+implementation(<span class="str">"androidx.compose.ui:ui"</span>)
+implementation(<span class="str">"androidx.compose.material3:material3"</span>)
+implementation(<span class="str">"androidx.compose.ui:ui-tooling-preview"</span>)
+implementation(<span class="str">"androidx.activity:activity-compose:1.9.0"</span>)
+
+<span class="cmt">// Navigation</span>
+implementation(<span class="str">"androidx.navigation:navigation-compose:2.7.7"</span>)
+
+<span class="cmt">// ViewModel + Lifecycle</span>
+implementation(<span class="str">"androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0"</span>)
+implementation(<span class="str">"androidx.lifecycle:lifecycle-runtime-ktx:2.8.0"</span>)
+
+<span class="cmt">// Room (local database)</span>
+implementation(<span class="str">"androidx.room:room-runtime:2.6.1"</span>)
+implementation(<span class="str">"androidx.room:room-ktx:2.6.1"</span>)
+ksp(<span class="str">"androidx.room:room-compiler:2.6.1"</span>)
+
+<span class="cmt">// Retrofit (API calls to Aladhan)</span>
+implementation(<span class="str">"com.squareup.retrofit2:retrofit:2.11.0"</span>)
+implementation(<span class="str">"com.squareup.retrofit2:converter-gson:2.11.0"</span>)
+implementation(<span class="str">"com.squareup.okhttp3:logging-interceptor:4.12.0"</span>)
+
+<span class="cmt">// Coroutines</span>
+implementation(<span class="str">"org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"</span>)
+
+<span class="cmt">// WorkManager (prayer notifications)</span>
+implementation(<span class="str">"androidx.work:work-runtime-ktx:2.9.0"</span>)
+
+<span class="cmt">// Location (GPS for auto prayer times)</span>
+implementation(<span class="str">"com.google.android.gms:play-services-location:21.3.0"</span>)
+
+<span class="cmt">// DataStore (settings persistence)</span>
+implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1"</span>)</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">AndroidManifest.xml — permissions</div>
+    <pre><span class="kw">&lt;uses-permission</span> android:name=<span class="str">"android.permission.INTERNET"</span>/&gt;
+<span class="kw">&lt;uses-permission</span> android:name=<span class="str">"android.permission.ACCESS_FINE_LOCATION"</span>/&gt;
+<span class="kw">&lt;uses-permission</span> android:name=<span class="str">"android.permission.ACCESS_COARSE_LOCATION"</span>/&gt;
+<span class="kw">&lt;uses-permission</span> android:name=<span class="str">"android.permission.POST_NOTIFICATIONS"</span>/&gt;
+<span class="kw">&lt;uses-permission</span> android:name=<span class="str">"android.permission.RECEIVE_BOOT_COMPLETED"</span>/&gt;
+<span class="kw">&lt;uses-feature</span> android:name=<span class="str">"android.hardware.sensor.compass"</span> android:required=<span class="str">"false"</span>/&gt;</pre>
+  </div>
+</div>
+
+<!-- 03 ARCHITECTURE -->
+<div class="section" id="arch">
+  <p class="section-meta">03 · Stage 1</p>
+  <h2 class="section-title">MVVM <span class="accent-green">Architecture</span></h2>
+
+  <div class="code-block">
+    <div class="code-label">Folder structure</div>
+    <pre>com.waqt.planner/
+├── <span class="tp">ui/</span>
+│   ├── MainActivity.kt
+│   ├── navigation/
+│   │   └── WaqtNavGraph.kt
+│   └── screens/
+│       ├── HomeScreen.kt         <span class="cmt">// prayer times + countdown</span>
+│       ├── PlannerScreen.kt      <span class="cmt">// daily schedule with study blocks</span>
+│       ├── QiblaScreen.kt        <span class="cmt">// compass</span>
+│       └── SettingsScreen.kt
+├── <span class="tp">viewmodel/</span>
+│   ├── PrayerViewModel.kt        <span class="cmt">// fetches + exposes prayer times</span>
+│   ├── PlannerViewModel.kt       <span class="cmt">// tasks + schedule logic</span>
+│   └── QiblaViewModel.kt         <span class="cmt">// sensor data</span>
+├── <span class="tp">repository/</span>
+│   ├── PrayerRepository.kt       <span class="cmt">// Retrofit + Room cache</span>
+│   └── TaskRepository.kt         <span class="cmt">// Room CRUD for tasks</span>
+├── <span class="tp">network/</span>
+│   ├── AladhanApi.kt             <span class="cmt">// Retrofit interface</span>
+│   └── PrayerResponse.kt         <span class="cmt">// JSON data classes</span>
+├── <span class="tp">database/</span>
+│   ├── WaqtDatabase.kt           <span class="cmt">// Room database</span>
+│   ├── PrayerDao.kt
+│   ├── TaskDao.kt
+│   └── entities/
+│       ├── PrayerEntity.kt
+│       └── TaskEntity.kt
+├── <span class="tp">worker/</span>
+│   └── PrayerNotificationWorker.kt
+└── <span class="tp">model/</span>
+    ├── Prayer.kt
+    └── Task.kt</pre>
+  </div>
+
+  <h4>Data flow — how it all connects</h4>
+  <div class="arch">
+    <div class="arch-row ui">
+      <span class="arch-name">UI</span>
+      <div class="arch-items">
+        <span class="arch-item">HomeScreen</span>
+        <span class="arch-item">PlannerScreen</span>
+        <span class="arch-item">QiblaScreen</span>
+        <span class="arch-item">SettingsScreen</span>
+      </div>
+    </div>
+    <div class="arch-arrow">↕ collectAsState() / events</div>
+    <div class="arch-row vm">
+      <span class="arch-name">ViewModel</span>
+      <div class="arch-items">
+        <span class="arch-item">PrayerViewModel</span>
+        <span class="arch-item">PlannerViewModel</span>
+        <span class="arch-item">QiblaViewModel</span>
+      </div>
+    </div>
+    <div class="arch-arrow">↕ suspend functions / Flow</div>
+    <div class="arch-row repo">
+      <span class="arch-name">Repository</span>
+      <div class="arch-items">
+        <span class="arch-item">PrayerRepository</span>
+        <span class="arch-item">TaskRepository</span>
+      </div>
+    </div>
+    <div class="arch-arrow">↕ network + database</div>
+    <div class="arch-row data">
+      <span class="arch-name">Data</span>
+      <div class="arch-items">
+        <span class="arch-item">Aladhan API (Retrofit)</span>
+        <span class="arch-item">Room DB (cache)</span>
+        <span class="arch-item">DataStore (settings)</span>
+        <span class="arch-item">Sensor Manager</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 API -->
+<div class="section" id="api">
+  <p class="section-meta">04 · Stage 1</p>
+  <h2 class="section-title">Aladhan API <span class="accent-green">Integration</span></h2>
+
+  <div class="tip"><strong>Aladhan API</strong> — free, no API key, no registration. Base URL: <code style="font-family:monospace;font-size:12px;">https://api.aladhan.com/v1/</code>. Returns Fajr, Dhuhr, Asr, Maghrib, Isha times for any lat/long or city name.</div>
+
+  <h4>The API call you'll make</h4>
+  <div class="code-block">
+    <div class="code-label">GET request example</div>
+    <pre>https://api.aladhan.com/v1/timings?
+  latitude=25.3960&
+  longitude=68.3578&
+  method=1          <span class="cmt">// 1 = MWL, 2 = ISNA, 5 = Egypt, 18 = Karachi (best for PK)</span>
+
+<span class="cmt">// Response (simplified):</span>
+{
+  <span class="str">"data"</span>: {
+    <span class="str">"timings"</span>: {
+      <span class="str">"Fajr"</span>:    <span class="str">"04:22"</span>,
+      <span class="str">"Sunrise"</span>: <span class="str">"05:47"</span>,
+      <span class="str">"Dhuhr"</span>:   <span class="str">"12:15"</span>,
+      <span class="str">"Asr"</span>:     <span class="str">"15:42"</span>,
+      <span class="str">"Maghrib"</span>: <span class="str">"18:43"</span>,
+      <span class="str">"Isha"</span>:    <span class="str">"20:02"</span>
+    },
+    <span class="str">"date"</span>: { <span class="str">"readable"</span>: <span class="str">"07 May 2026"</span>, <span class="str">"hijri"</span>: { ... } }
+  }
+}</pre>
+  </div>
+
+  <h4>AladhanApi.kt — Retrofit interface</h4>
+  <div class="code-block">
+    <div class="code-label">network/AladhanApi.kt</div>
+    <pre><span class="kw">interface</span> <span class="tp">AladhanApi</span> {
+    @GET(<span class="str">"timings"</span>)
+    <span class="kw">suspend fun</span> <span class="fn">getPrayerTimes</span>(
+        @Query(<span class="str">"latitude"</span>)  latitude:  <span class="tp">Double</span>,
+        @Query(<span class="str">"longitude"</span>) longitude: <span class="tp">Double</span>,
+        @Query(<span class="str">"method"</span>)    method:    <span class="tp">Int</span> = <span class="nm">18</span> <span class="cmt">// Karachi method</span>
+    ): <span class="tp">PrayerResponse</span>
+
+    @GET(<span class="str">"timingsByCity"</span>)
+    <span class="kw">suspend fun</span> <span class="fn">getPrayerTimesByCity</span>(
+        @Query(<span class="str">"city"</span>)    city:    <span class="tp">String</span>,
+        @Query(<span class="str">"country"</span>) country: <span class="tp">String</span> = <span class="str">"PK"</span>,
+        @Query(<span class="str">"method"</span>)  method:  <span class="tp">Int</span> = <span class="nm">18</span>
+    ): <span class="tp">PrayerResponse</span>
+}
+
+<span class="cmt">// Retrofit instance (singleton)</span>
+<span class="kw">object</span> <span class="tp">RetrofitInstance</span> {
+    <span class="kw">val</span> api: <span class="tp">AladhanApi</span> <span class="kw">by</span> lazy {
+        Retrofit.Builder()
+            .baseUrl(<span class="str">"https://api.aladhan.com/v1/"</span>)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(<span class="tp">AladhanApi</span>::<span class="kw">class</span>.java)
+    }
+}</pre>
+  </div>
+
+  <h4>PrayerResponse.kt — data classes matching JSON</h4>
+  <div class="code-block">
+    <div class="code-label">network/PrayerResponse.kt</div>
+    <pre><span class="kw">data class</span> <span class="tp">PrayerResponse</span>(
+    <span class="kw">val</span> data: <span class="tp">PrayerData</span>
+)
+<span class="kw">data class</span> <span class="tp">PrayerData</span>(
+    <span class="kw">val</span> timings: <span class="tp">Timings</span>,
+    <span class="kw">val</span> date: <span class="tp">DateInfo</span>
+)
+<span class="kw">data class</span> <span class="tp">Timings</span>(
+    @SerializedName(<span class="str">"Fajr"</span>)    <span class="kw">val</span> fajr:    <span class="tp">String</span>,
+    @SerializedName(<span class="str">"Sunrise"</span>) <span class="kw">val</span> sunrise: <span class="tp">String</span>,
+    @SerializedName(<span class="str">"Dhuhr"</span>)   <span class="kw">val</span> dhuhr:   <span class="tp">String</span>,
+    @SerializedName(<span class="str">"Asr"</span>)     <span class="kw">val</span> asr:     <span class="tp">String</span>,
+    @SerializedName(<span class="str">"Maghrib"</span>) <span class="kw">val</span> maghrib: <span class="tp">String</span>,
+    @SerializedName(<span class="str">"Isha"</span>)    <span class="kw">val</span> isha:    <span class="tp">String</span>
+)
+<span class="kw">data class</span> <span class="tp">DateInfo</span>(
+    <span class="kw">val</span> readable: <span class="tp">String</span>,
+    <span class="kw">val</span> hijri: <span class="tp">HijriDate</span>
+)
+<span class="kw">data class</span> <span class="tp">HijriDate</span>(
+    <span class="kw">val</span> date: <span class="tp">String</span>,
+    <span class="kw">val</span> month: <span class="tp">HijriMonth</span>
+)
+<span class="kw">data class</span> <span class="tp">HijriMonth</span>(<span class="kw">val</span> en: <span class="tp">String</span>, <span class="kw">val</span> ar: <span class="tp">String</span>)</pre>
+  </div>
+
+  <h4>PrayerRepository.kt — API call with Room caching</h4>
+  <div class="code-block">
+    <div class="code-label">repository/PrayerRepository.kt</div>
+    <pre><span class="kw">class</span> <span class="tp">PrayerRepository</span>(
+    <span class="kw">private val</span> api: <span class="tp">AladhanApi</span>,
+    <span class="kw">private val</span> dao: <span class="tp">PrayerDao</span>
+) {
+    <span class="kw">suspend fun</span> <span class="fn">getPrayerTimes</span>(lat: <span class="tp">Double</span>, lng: <span class="tp">Double</span>): <span class="tp">Result</span>&lt;<span class="tp">List</span>&lt;<span class="tp">Prayer</span>&gt;&gt; {
+        <span class="kw">return try</span> {
+            <span class="cmt">// 1. Try network first</span>
+            <span class="kw">val</span> response = api.<span class="fn">getPrayerTimes</span>(lat, lng)
+            <span class="kw">val</span> prayers = response.data.timings.<span class="fn">toEntityList</span>()
+            <span class="cmt">// 2. Cache in Room</span>
+            dao.<span class="fn">insertAll</span>(prayers)
+            <span class="tp">Result</span>.<span class="fn">success</span>(prayers.<span class="fn">map</span> { it.<span class="fn">toDomain</span>() })
+        } <span class="kw">catch</span> (e: <span class="tp">Exception</span>) {
+            <span class="cmt">// 3. Offline fallback — return cached data</span>
+            <span class="kw">val</span> cached = dao.<span class="fn">getTodayPrayers</span>()
+            <span class="kw">if</span> (cached.<span class="fn">isNotEmpty</span>())
+                <span class="tp">Result</span>.<span class="fn">success</span>(cached.<span class="fn">map</span> { it.<span class="fn">toDomain</span>() })
+            <span class="kw">else</span>
+                <span class="tp">Result</span>.<span class="fn">failure</span>(e)
+        }
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- 05 ROOM -->
+<div class="section" id="room">
+  <p class="section-meta">05 · Stage 1</p>
+  <h2 class="section-title">Room <span class="accent-green">Database</span></h2>
+
+  <div class="code-block">
+    <div class="code-label">database/entities/PrayerEntity.kt</div>
+    <pre>@Entity(tableName = <span class="str">"prayers"</span>)
+<span class="kw">data class</span> <span class="tp">PrayerEntity</span>(
+    @PrimaryKey <span class="kw">val</span> id: <span class="tp">String</span>,    <span class="cmt">// e.g. "2026-05-07_Fajr"</span>
+    <span class="kw">val</span> name:    <span class="tp">String</span>,            <span class="cmt">// "Fajr"</span>
+    <span class="kw">val</span> time:    <span class="tp">String</span>,            <span class="cmt">// "04:22"</span>
+    <span class="kw">val</span> date:    <span class="tp">String</span>,            <span class="cmt">// "2026-05-07"</span>
+    <span class="kw">val</span> epochMs: <span class="tp">Long</span>               <span class="cmt">// for sorting + notification scheduling</span>
+)
+
+@Entity(tableName = <span class="str">"tasks"</span>)
+<span class="kw">data class</span> <span class="tp">TaskEntity</span>(
+    @PrimaryKey(autoGenerate = <span class="kw">true</span>) <span class="kw">val</span> id: <span class="tp">Int</span> = <span class="nm">0</span>,
+    <span class="kw">val</span> title:     <span class="tp">String</span>,
+    <span class="kw">val</span> subject:   <span class="tp">String</span>,
+    <span class="kw">val</span> slotStart: <span class="tp">String</span>,          <span class="cmt">// "14:00" — time slot assigned</span>
+    <span class="kw">val</span> slotEnd:   <span class="tp">String</span>,          <span class="cmt">// "15:30"</span>
+    <span class="kw">val</span> date:      <span class="tp">String</span>,
+    <span class="kw">val</span> isDone:    <span class="tp">Boolean</span> = <span class="kw">false</span>,
+    <span class="kw">val</span> priority:  <span class="tp">Int</span> = <span class="nm">1</span>           <span class="cmt">// 1=Low, 2=Medium, 3=High</span>
+)</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">database/WaqtDatabase.kt</div>
+    <pre>@Database(entities = [<span class="tp">PrayerEntity</span>::<span class="kw">class</span>, <span class="tp">TaskEntity</span>::<span class="kw">class</span>], version = <span class="nm">1</span>)
+<span class="kw">abstract class</span> <span class="tp">WaqtDatabase</span> : <span class="tp">RoomDatabase</span>() {
+    <span class="kw">abstract fun</span> <span class="fn">prayerDao</span>(): <span class="tp">PrayerDao</span>
+    <span class="kw">abstract fun</span> <span class="fn">taskDao</span>(): <span class="tp">TaskDao</span>
+
+    <span class="kw">companion object</span> {
+        @Volatile <span class="kw">private var</span> INSTANCE: <span class="tp">WaqtDatabase</span>? = <span class="kw">null</span>
+        <span class="kw">fun</span> <span class="fn">getInstance</span>(context: <span class="tp">Context</span>) = INSTANCE ?: <span class="kw">synchronized</span>(<span class="kw">this</span>) {
+            Room.databaseBuilder(context, <span class="tp">WaqtDatabase</span>::<span class="kw">class</span>.java, <span class="str">"waqt.db"</span>)
+                .build().also { INSTANCE = it }
+        }
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- 06 SCREENS -->
+<div class="section" id="screens">
+  <p class="section-meta">06 · Stage 1</p>
+  <h2 class="section-title">All Screens <span class="accent-green">(Jetpack Compose)</span></h2>
+
+  <h4>Navigation setup</h4>
+  <div class="code-block">
+    <div class="code-label">navigation/WaqtNavGraph.kt</div>
+    <pre><span class="kw">sealed class</span> <span class="tp">Screen</span>(<span class="kw">val</span> route: <span class="tp">String</span>) {
+    <span class="kw">object</span> <span class="tp">Home</span>     : <span class="tp">Screen</span>(<span class="str">"home"</span>)
+    <span class="kw">object</span> <span class="tp">Planner</span>  : <span class="tp">Screen</span>(<span class="str">"planner"</span>)
+    <span class="kw">object</span> <span class="tp">Qibla</span>    : <span class="tp">Screen</span>(<span class="str">"qibla"</span>)
+    <span class="kw">object</span> <span class="tp">Settings</span> : <span class="tp">Screen</span>(<span class="str">"settings"</span>)
+}
+
+@Composable
+<span class="kw">fun</span> <span class="fn">WaqtNavGraph</span>(navController: <span class="tp">NavHostController</span>) {
+    <span class="fn">NavHost</span>(navController, startDestination = Screen.Home.route) {
+        <span class="fn">composable</span>(Screen.Home.route)     { <span class="fn">HomeScreen</span>(navController) }
+        <span class="fn">composable</span>(Screen.Planner.route)  { <span class="fn">PlannerScreen</span>(navController) }
+        <span class="fn">composable</span>(Screen.Qibla.route)    { <span class="fn">QiblaScreen</span>() }
+        <span class="fn">composable</span>(Screen.Settings.route) { <span class="fn">SettingsScreen</span>() }
+    }
+}</pre>
+  </div>
+
+  <h4>HomeScreen.kt — key composables</h4>
+  <div class="code-block">
+    <div class="code-label">ui/screens/HomeScreen.kt (structure)</div>
+    <pre>@Composable
+<span class="kw">fun</span> <span class="fn">HomeScreen</span>(navController: <span class="tp">NavHostController</span>) {
+    <span class="kw">val</span> vm: <span class="tp">PrayerViewModel</span> = viewModel()
+    <span class="kw">val</span> uiState <span class="kw">by</span> vm.uiState.<span class="fn">collectAsState</span>()
+
+    <span class="fn">Scaffold</span>(bottomBar = { <span class="fn">WaqtBottomNav</span>(navController) }) { padding ->
+        <span class="fn">LazyColumn</span>(contentPadding = padding) {
+            <span class="cmt">// 1. Header — date + hijri date</span>
+            item { <span class="fn">DateHeader</span>(uiState.gregorianDate, uiState.hijriDate) }
+
+            <span class="cmt">// 2. Next prayer countdown — the hero card</span>
+            item { <span class="fn">NextPrayerCard</span>(uiState.nextPrayer, uiState.countdown) }
+
+            <span class="cmt">// 3. All 5 prayers in a row</span>
+            item { <span class="fn">PrayerTimesRow</span>(uiState.prayers) }
+
+            <span class="cmt">// 4. Today's study block summary</span>
+            item { <span class="fn">TodayPlannerSummary</span>(uiState.todayTasks, navController) }
+        }
+    }
+}
+
+<span class="cmt">// Countdown — updates every second using LaunchedEffect</span>
+@Composable
+<span class="kw">fun</span> <span class="fn">NextPrayerCard</span>(prayer: <span class="tp">Prayer?</span>, countdown: <span class="tp">String</span>) {
+    <span class="fn">Card</span>(modifier = Modifier.<span class="fn">fillMaxWidth</span>().<span class="fn">padding</span>(<span class="nm">16</span>.dp)) {
+        <span class="fn">Column</span>(horizontalAlignment = Alignment.CenterHorizontally) {
+            <span class="fn">Text</span>(<span class="str">"Next Prayer"</span>, style = MaterialTheme.typography.labelMedium)
+            <span class="fn">Text</span>(prayer?.name ?: <span class="str">""</span>, style = MaterialTheme.typography.headlineLarge)
+            <span class="fn">Text</span>(prayer?.time ?: <span class="str">""</span>, style = MaterialTheme.typography.titleLarge)
+            <span class="fn">Text</span>(countdown, style = MaterialTheme.typography.displaySmall,
+                 color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}</pre>
+  </div>
+
+  <h4>QiblaScreen.kt — Canvas compass</h4>
+  <div class="code-block">
+    <div class="code-label">ui/screens/QiblaScreen.kt</div>
+    <pre>@Composable
+<span class="kw">fun</span> <span class="fn">QiblaScreen</span>() {
+    <span class="kw">val</span> vm: <span class="tp">QiblaViewModel</span> = viewModel()
+    <span class="kw">val</span> azimuth <span class="kw">by</span> vm.azimuth.<span class="fn">collectAsState</span>(<span class="nm">0f</span>)
+    <span class="kw">val</span> qiblaAngle <span class="kw">by</span> vm.qiblaAngle.<span class="fn">collectAsState</span>(<span class="nm">0f</span>)
+
+    <span class="fn">Box</span>(contentAlignment = Alignment.Center, modifier = Modifier.<span class="fn">fillMaxSize</span>()) {
+        <span class="fn">Canvas</span>(modifier = Modifier.<span class="fn">size</span>(<span class="nm">280</span>.dp)) {
+            <span class="kw">val</span> center = Offset(size.width/<span class="nm">2</span>, size.height/<span class="nm">2</span>)
+            <span class="kw">val</span> radius = size.minDimension / <span class="nm">2</span>
+
+            <span class="cmt">// Draw compass circle</span>
+            <span class="fn">drawCircle</span>(color = compassBg, radius = radius)
+            <span class="fn">drawCircle</span>(color = compassBorder, radius = radius,
+                       style = <span class="tp">Stroke</span>(width = <span class="nm">3</span>.dp.toPx()))
+
+            <span class="cmt">// Rotate needle to point at Qibla</span>
+            <span class="kw">val</span> angle = qiblaAngle - azimuth
+            <span class="fn">rotate</span>(angle, center) {
+                <span class="fn">drawLine</span>(
+                    color = <span class="tp">Color</span>.Green,
+                    start = center,
+                    end = Offset(center.x, center.y - radius * <span class="nm">0.8f</span>),
+                    strokeWidth = <span class="nm">6</span>.dp.toPx(),
+                    cap = <span class="tp">StrokeCap</span>.Round
+                )
+            }
+        }
+        <span class="fn">Text</span>(<span class="str">"🕋"</span>, fontSize = <span class="nm">32</span>.sp,
+             modifier = Modifier.<span class="fn">align</span>(Alignment.TopCenter).<span class="fn">padding</span>(top = <span class="nm">24</span>.dp))
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- 07 PLANNER LOGIC -->
+<div class="section" id="planner">
+  <p class="section-meta">07 · Stage 1</p>
+  <h2 class="section-title">Study Planner <span class="accent-green">Logic</span></h2>
+
+  <p>The planner's key feature is <strong>auto-generating study blocks in the gaps between prayers</strong>. This is the algorithm your teacher will find impressive.</p>
+
+  <div class="code-block">
+    <div class="code-label">viewmodel/PlannerViewModel.kt — slot generation</div>
+    <pre><span class="kw">fun</span> <span class="fn">generateStudySlots</span>(prayers: <span class="tp">List</span>&lt;<span class="tp">Prayer</span>&gt;): <span class="tp">List</span>&lt;<span class="tp">TimeSlot</span>&gt; {
+    <span class="kw">val</span> slots = <span class="fn">mutableListOf</span>&lt;<span class="tp">TimeSlot</span>&gt;()
+    <span class="kw">val</span> sorted = prayers.<span class="fn">sortedBy</span> { it.epochMs }
+
+    <span class="kw">for</span> (i <span class="kw">in</span> <span class="nm">0</span> until sorted.size - <span class="nm">1</span>) {
+        <span class="kw">val</span> gapMinutes = (sorted[i+<span class="nm">1</span>].epochMs - sorted[i].epochMs) / <span class="nm">60_000</span>
+
+        <span class="kw">when</span> {
+            gapMinutes < <span class="nm">45</span>  -> <span class="cmt">/* too short — skip */</span>
+                Unit
+            gapMinutes < <span class="nm">90</span>  -> slots.<span class="fn">add</span>(<span class="tp">TimeSlot</span>(
+                start    = sorted[i].time,
+                end      = sorted[i+<span class="nm">1</span>].time,
+                type     = <span class="tp">SlotType</span>.SHORT_STUDY,
+                label    = <span class="str">"Quick revision (${gapMinutes}m)"</span>
+            ))
+            gapMinutes < <span class="nm">180</span> -> slots.<span class="fn">add</span>(<span class="tp">TimeSlot</span>(
+                start    = sorted[i].time,
+                end      = sorted[i+<span class="nm">1</span>].time,
+                type     = <span class="tp">SlotType</span>.STUDY,
+                label    = <span class="str">"Study block (${gapMinutes}m)"</span>
+            ))
+            <span class="kw">else</span>              -> {
+                <span class="cmt">// Long gap — split into study + break</span>
+                slots.<span class="fn">add</span>(<span class="tp">TimeSlot</span>(type = <span class="tp">SlotType</span>.STUDY, label = <span class="str">"Deep work"</span>))
+                slots.<span class="fn">add</span>(<span class="tp">TimeSlot</span>(type = <span class="tp">SlotType</span>.BREAK, label = <span class="str">"Break"</span>))
+            }
+        }
+    }
+    <span class="kw">return</span> slots
+}</pre>
+  </div>
+
+  <h4>Prayer notification worker</h4>
+  <div class="code-block">
+    <div class="code-label">worker/PrayerNotificationWorker.kt</div>
+    <pre><span class="kw">class</span> <span class="tp">PrayerNotificationWorker</span>(ctx: <span class="tp">Context</span>, params: <span class="tp">WorkerParameters</span>)
+    : <span class="tp">CoroutineWorker</span>(ctx, params) {
+
+    <span class="kw">override suspend fun</span> <span class="fn">doWork</span>(): <span class="tp">Result</span> {
+        <span class="kw">val</span> prayerName = inputData.<span class="fn">getString</span>(<span class="str">"prayer_name"</span>) ?: <span class="kw">return</span> <span class="tp">Result</span>.<span class="fn">failure</span>()
+        <span class="kw">val</span> prayerTime = inputData.<span class="fn">getString</span>(<span class="str">"prayer_time"</span>) ?: <span class="kw">return</span> <span class="tp">Result</span>.<span class="fn">failure</span>()
+
+        <span class="fn">showNotification</span>(
+            title = <span class="str">"$prayerName in 10 minutes"</span>,
+            body  = <span class="str">"Time: $prayerTime — wrap up your current task"</span>
+        )
+        <span class="kw">return</span> <span class="tp">Result</span>.<span class="fn">success</span>()
+    }
+}
+
+<span class="cmt">// Schedule all 5 prayers after fetching times</span>
+<span class="kw">fun</span> <span class="fn">schedulePrayerNotifications</span>(prayers: <span class="tp">List</span>&lt;<span class="tp">Prayer</span>&gt;) {
+    prayers.<span class="fn">forEach</span> { prayer ->
+        <span class="kw">val</span> delayMs = prayer.epochMs - <span class="tp">System</span>.<span class="fn">currentTimeMillis</span>() - (<span class="nm">10</span> * <span class="nm">60_000</span>)
+        <span class="kw">if</span> (delayMs > <span class="nm">0</span>) {
+            <span class="kw">val</span> request = OneTimeWorkRequestBuilder&lt;<span class="tp">PrayerNotificationWorker</span>&gt;()
+                .<span class="fn">setInitialDelay</span>(delayMs, <span class="tp">TimeUnit</span>.MILLISECONDS)
+                .<span class="fn">setInputData</span>(<span class="fn">workDataOf</span>(
+                    <span class="str">"prayer_name"</span> to prayer.name,
+                    <span class="str">"prayer_time"</span> to prayer.time
+                )).<span class="fn">build</span>()
+            <span class="tp">WorkManager</span>.<span class="fn">getInstance</span>(context).<span class="fn">enqueue</span>(request)
+        }
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- 08 TIMELINE -->
+<div class="section" id="timeline">
+  <p class="section-meta">08 · Stage 1</p>
+  <h2 class="section-title">10-Day Sprint <span class="accent-green">Timeline</span></h2>
+
+  <div class="timeline">
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">1</div><div class="tl-day-name">Mon</div></div>
+      <div>
+        <p class="tl-day-title">Project scaffolding</p>
+        <ul class="tl-tasks">
+          <li>Create project, configure build.gradle.kts with all dependencies</li>
+          <li>Build folder structure — all packages created, empty files</li>
+          <li>Set up WaqtNavGraph with 4 routes and bottom navigation bar</li>
+          <li>Confirm app runs on emulator with nav working between blank screens</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">2</div><div class="tl-day-name">Tue</div></div>
+      <div>
+        <p class="tl-day-title">Aladhan API integration</p>
+        <ul class="tl-tasks">
+          <li>Write AladhanApi.kt, PrayerResponse.kt data classes</li>
+          <li>Test API call in isolation — hardcode lat/long, log response to Logcat</li>
+          <li>Write PrayerRepository with network call + error handling</li>
+          <li>Write PrayerViewModel — expose StateFlow of prayer list</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">3</div><div class="tl-day-name">Wed</div></div>
+      <div>
+        <p class="tl-day-title">Room database + GPS</p>
+        <ul class="tl-tasks">
+          <li>Define PrayerEntity, TaskEntity, DAOs, WaqtDatabase</li>
+          <li>Wire repository: API call → save to Room → read from Room on offline</li>
+          <li>Add FusedLocationProvider — get lat/long on first launch</li>
+          <li>Pass device location to API — auto prayer times working end-to-end</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">4</div><div class="tl-day-name">Thu</div></div>
+      <div>
+        <p class="tl-day-title">HomeScreen UI</p>
+        <ul class="tl-tasks">
+          <li>Build DateHeader, NextPrayerCard, PrayerTimesRow composables</li>
+          <li>Wire ViewModel → UI with collectAsState()</li>
+          <li>Add live countdown — LaunchedEffect + delay(1000) ticker</li>
+          <li>Home screen looks complete and impressive by end of day</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">5</div><div class="tl-day-name">Fri</div></div>
+      <div>
+        <p class="tl-day-title">Study planner</p>
+        <ul class="tl-tasks">
+          <li>Write generateStudySlots() algorithm in PlannerViewModel</li>
+          <li>Build PlannerScreen — timeline layout with prayer anchors and study blocks</li>
+          <li>Add task creation bottom sheet — title, subject, priority</li>
+          <li>Tasks saved to Room, appear in correct time slot</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day rest">
+      <div class="tl-left"><div class="tl-day-num">6–7</div><div class="tl-day-name">Weekend</div></div>
+      <div>
+        <p class="tl-day-title">Buffer + fixes</p>
+        <ul class="tl-tasks">
+          <li>Fix any crashes or broken flows from Week 1</li>
+          <li>Do not add new features — stabilise what exists</li>
+          <li>Demo it to someone not in your class and note confusion points</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">8</div><div class="tl-day-name">Mon</div></div>
+      <div>
+        <p class="tl-day-title">Qibla compass</p>
+        <ul class="tl-tasks">
+          <li>Write QiblaViewModel — register SensorManager for TYPE_ROTATION_VECTOR</li>
+          <li>Calculate Qibla bearing from device location to Makkah (21.4225°N, 39.8262°E)</li>
+          <li>Build Canvas compass in QiblaScreen — needle rotates smoothly</li>
+          <li>This is your demo showstopper — practice showing it</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">9</div><div class="tl-day-name">Tue</div></div>
+      <div>
+        <p class="tl-day-title">Notifications + Settings</p>
+        <ul class="tl-tasks">
+          <li>Write PrayerNotificationWorker, schedule after prayer times load</li>
+          <li>Build SettingsScreen — city override, calculation method picker</li>
+          <li>Persist settings with DataStore Preferences</li>
+          <li>Test notifications actually fire on a real device</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-left"><div class="tl-day-num">10</div><div class="tl-day-name">Wed</div></div>
+      <div>
+        <p class="tl-day-title">Polish + demo prep</p>
+        <ul class="tl-tasks">
+          <li>Design app icon, set theme colors in MaterialTheme</li>
+          <li>Handle empty states, loading states, error states gracefully</li>
+          <li>Generate release APK — install on your phone for the demo</li>
+          <li>Prepare a 3-minute demo script — what you'll show and say</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 09 DEMO -->
+<div class="section" id="demo">
+  <p class="section-meta">09 · Stage 1</p>
+  <h2 class="section-title">Demo Day <span class="accent-green">Checklist</span></h2>
+
+  <div class="tip"><strong>Demo order that impresses:</strong> Start with the live compass (visual wow), then show today's prayer times auto-loaded for your city, then the countdown ticking, then the planner with study blocks auto-generated, then add a task live. That arc builds excitement.</div>
+
+  <ul class="checklist">
+    <li><span class="check-box"></span><div><strong>Install on real device</strong> — never demo on emulator. Emulators crash under pressure.</div></li>
+    <li><span class="check-box"></span><div><strong>Full mobile data</strong> — ensure the API call succeeds on demo day. Arrive early and load the app to cache prayer times before you present.</div></li>
+    <li><span class="check-box"></span><div><strong>Know your API</strong> — be ready to explain what Aladhan returns, how you parse the JSON, and how Room caches it offline.</div></li>
+    <li><span class="check-box"></span><div><strong>Explain MVVM</strong> — draw the 4-layer diagram on the whiteboard if asked. UI → ViewModel → Repository → Data. Know why this separation matters.</div></li>
+    <li><span class="check-box"></span><div><strong>Show Logcat briefly</strong> — pull up Android Studio and show the API response logging. Teachers love seeing the raw JSON and parsing.</div></li>
+    <li><span class="check-box"></span><div><strong>Show Room in DB Browser</strong> — download DB Browser for SQLite, pull the app's .db file, show the tables. Very impressive.</div></li>
+    <li><span class="check-box"></span><div><strong>Backup APK on USB</strong> — if your phone dies, have the APK on a USB stick to install on any Android phone instantly.</div></li>
+  </ul>
+</div>
+
+<hr>
+
+<!-- ─────────────────────────────── STAGE 2 ─────────────────────────────── -->
+
+<div class="stage-banner s2" style="margin-top: 2.5rem;">
+  <div class="stage-icon">🚀</div>
+  <div>
+    <p class="stage-label">Stage 2 — After Submission</p>
+    <p class="stage-title">Monetize, Polish & Publish to Play Store</p>
+    <p class="stage-desc">Marks are in. Now you build for users, not teachers. These steps turn your semester project into a real product that earns.</p>
+  </div>
+</div>
+
+<!-- 10 ADMOB -->
+<div class="section" id="admob">
+  <p class="section-meta">10 · Stage 2</p>
+  <h2 class="section-title">AdMob <span class="accent-purple">Integration</span></h2>
+
+  <div class="tip-purple"><strong>Why prayer apps earn well from ads:</strong> Users open them 5× per day, every day. That's unusually high session frequency — most apps see 1-2 opens daily. Higher frequency = higher ad impressions = better CPM revenue for the same user count.</div>
+
+  <div class="code-block">
+    <div class="code-label">Add to build.gradle.kts</div>
+    <pre>implementation(<span class="str">"com.google.android.gms:play-services-ads:23.1.0"</span>)</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">AndroidManifest.xml — AdMob app ID</div>
+    <pre><span class="kw">&lt;meta-data</span>
+    android:name=<span class="str">"com.google.android.gms.ads.APPLICATION_ID"</span>
+    android:value=<span class="str">"ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"</span>/&gt;</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">BannerAdView composable — add to HomeScreen bottom</div>
+    <pre>@Composable
+<span class="kw">fun</span> <span class="fn">WaqtBannerAd</span>(modifier: <span class="tp">Modifier</span> = Modifier) {
+    <span class="fn">AndroidView</span>(
+        modifier = modifier.<span class="fn">fillMaxWidth</span>().<span class="fn">height</span>(<span class="nm">50</span>.dp),
+        factory = { context ->
+            <span class="tp">AdView</span>(context).<span class="fn">apply</span> {
+                <span class="fn">setAdSize</span>(<span class="tp">AdSize</span>.BANNER)
+                adUnitId = <span class="str">"ca-app-pub-XXXXXXXX/XXXXXXXXXX"</span>
+                <span class="fn">loadAd</span>(<span class="tp">AdRequest</span>.Builder().<span class="fn">build</span>())
+            }
+        }
+    )
+}
+
+<span class="cmt">// In HomeScreen Scaffold:</span>
+<span class="fn">Scaffold</span>(
+    bottomBar = {
+        <span class="fn">Column</span> {
+            <span class="kw">if</span> (!isPremium) <span class="fn">WaqtBannerAd</span>()   <span class="cmt">// hide for premium users</span>
+            <span class="fn">WaqtBottomNav</span>(navController)
+        }
+    }
+)</pre>
+  </div>
+</div>
+
+<!-- 11 BILLING -->
+<div class="section" id="billing">
+  <p class="section-meta">11 · Stage 2</p>
+  <h2 class="section-title">In-App Billing <span class="accent-purple">(Premium)</span></h2>
+
+  <p>One-time purchase: <strong>"Waqt Premium"</strong> — ad-free + custom themes + home screen widget. Price suggestion: Rs. 299 (~$1 USD). Impulse-buy price point.</p>
+
+  <div class="code-block">
+    <div class="code-label">Add to build.gradle.kts</div>
+    <pre>implementation(<span class="str">"com.android.billingclient:billing-ktx:7.0.0"</span>)</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">BillingRepository.kt — simplified flow</div>
+    <pre><span class="kw">class</span> <span class="tp">BillingRepository</span>(<span class="kw">private val</span> context: <span class="type">Context</span>) {
+
+    <span class="kw">private val</span> PRODUCT_ID = <span class="str">"waqt_premium"</span>
+    <span class="kw">private lateinit var</span> billingClient: <span class="tp">BillingClient</span>
+
+    <span class="kw">fun</span> <span class="fn">initialize</span>() {
+        billingClient = <span class="tp">BillingClient</span>.<span class="fn">newBuilder</span>(context)
+            .<span class="fn">setListener</span> { billingResult, purchases ->
+                <span class="kw">if</span> (billingResult.responseCode == <span class="tp">BillingClient</span>.<span class="tp">BillingResponseCode</span>.OK
+                    && purchases != <span class="kw">null</span>) {
+                    purchases.<span class="fn">forEach</span> { <span class="fn">handlePurchase</span>(it) }
+                }
+            }
+            .<span class="fn">enablePendingPurchases</span>()
+            .<span class="fn">build</span>()
+        billingClient.<span class="fn">startConnection</span>( <span class="cmt">/* connection callbacks */</span> )
+    }
+
+    <span class="kw">fun</span> <span class="fn">launchPurchaseFlow</span>(activity: <span class="tp">Activity</span>) {
+        <span class="cmt">// Query product details then launch billing flow</span>
+        <span class="kw">val</span> productList = <span class="fn">listOf</span>(
+            QueryProductDetailsParams.Product.newBuilder()
+                .<span class="fn">setProductId</span>(PRODUCT_ID)
+                .<span class="fn">setProductType</span>(<span class="tp">BillingClient</span>.<span class="tp">ProductType</span>.INAPP)
+                .<span class="fn">build</span>()
+        )
+        <span class="cmt">// ... query → launch BillingFlowParams</span>
+    }
+
+    <span class="kw">private fun</span> <span class="fn">handlePurchase</span>(purchase: <span class="tp">Purchase</span>) {
+        <span class="kw">if</span> (purchase.purchaseState == <span class="tp">Purchase</span>.<span class="tp">PurchaseState</span>.PURCHASED) {
+            <span class="cmt">// Save premium flag to DataStore</span>
+            <span class="cmt">// Acknowledge purchase (required or Google refunds after 3 days)</span>
+            billingClient.<span class="fn">acknowledgePurchase</span>( <span class="cmt">/* params */</span> ) {}
+        }
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- 12 WIDGET -->
+<div class="section" id="widget">
+  <p class="section-meta">12 · Stage 2</p>
+  <h2 class="section-title">Home Screen <span class="accent-purple">Widget</span></h2>
+
+  <p>A 4×2 widget showing the next prayer name, time, and live countdown. This is your single best retention feature — users see Waqt every time they look at their phone.</p>
+
+  <div class="code-block">
+    <div class="code-label">res/xml/waqt_widget_info.xml</div>
+    <pre><span class="kw">&lt;appwidget-provider</span>
+    android:minWidth=<span class="str">"250dp"</span>
+    android:minHeight=<span class="str">"110dp"</span>
+    android:updatePeriodMillis=<span class="str">"60000"</span>
+    android:previewImage=<span class="str">"@drawable/widget_preview"</span>
+    android:initialLayout=<span class="str">"@layout/waqt_widget"</span>
+    android:widgetCategory=<span class="str">"home_screen"</span>/&gt;</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">WaqtWidgetProvider.kt</div>
+    <pre><span class="kw">class</span> <span class="tp">WaqtWidgetProvider</span> : <span class="tp">AppWidgetProvider</span>() {
+    <span class="kw">override fun</span> <span class="fn">onUpdate</span>(context: <span class="tp">Context</span>, manager: <span class="tp">AppWidgetManager</span>,
+                           ids: <span class="tp">IntArray</span>) {
+        ids.<span class="fn">forEach</span> { id ->
+            <span class="kw">val</span> views = <span class="tp">RemoteViews</span>(context.packageName, R.layout.waqt_widget)
+            <span class="cmt">// Read cached prayer from Room (no network in widget)</span>
+            <span class="kw">val</span> nextPrayer = <span class="fn">getNextPrayerFromCache</span>(context)
+            views.<span class="fn">setTextViewText</span>(R.id.widget_prayer_name, nextPrayer.name)
+            views.<span class="fn">setTextViewText</span>(R.id.widget_prayer_time, nextPrayer.time)
+            manager.<span class="fn">updateAppWidget</span>(id, views)
+        }
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- 13 PLAY STORE -->
+<div class="section" id="playstore">
+  <p class="section-meta">13 · Stage 2</p>
+  <h2 class="section-title">Play Store <span class="accent-purple">Publishing</span></h2>
+
+  <h4>Build release AAB</h4>
+  <ul class="checklist">
+    <li><span class="check-box"></span><div><strong>Generate keystore</strong> — Build → Generate Signed Bundle → Create new. Save .jks file safely. You cannot re-upload without it, ever.</div></li>
+    <li><span class="check-box"></span><div><strong>targetSdk = 34</strong> — required by Play Store. Set in build.gradle.kts.</div></li>
+    <li><span class="check-box"></span><div><strong>Build .aab not .apk</strong> — Play Store requires Android App Bundle format.</div></li>
+    <li><span class="check-box"></span><div><strong>ProGuard enabled</strong> — minifyEnabled = true in release buildType. Smaller app, harder to reverse-engineer.</div></li>
+  </ul>
+
+  <h4>Play Console listing</h4>
+  <ul class="checklist">
+    <li><span class="check-box"></span><div><strong>Developer account</strong> — play.google.com/console — $25 one-time fee.</div></li>
+    <li><span class="check-box"></span><div><strong>App title</strong> — "Waqt — Prayer Times & Planner" (keyword-rich for ASO)</div></li>
+    <li><span class="check-box"></span><div><strong>Short description</strong> — "Auto prayer times + smart study planner. Works offline." (80 chars)</div></li>
+    <li><span class="check-box"></span><div><strong>Full description</strong> — write in English and Urdu. Mention: Aladhan, Qibla compass, offline, all calculation methods, Pakistan/India/Bangladesh.</div></li>
+    <li><span class="check-box"></span><div><strong>Screenshots</strong> — minimum 2. Show home screen (prayer countdown) and planner screen. Use a real Pixel phone or a frame generator like Mockuphone.</div></li>
+    <li><span class="check-box"></span><div><strong>App icon</strong> — 512×512px. Design something clean — crescent + simple clock.</div></li>
+    <li><span class="check-box"></span><div><strong>Privacy policy</strong> — required because you use location. Host a simple one on GitHub Pages for free.</div></li>
+    <li><span class="check-box"></span><div><strong>Content rating</strong> — complete questionnaire. Waqt gets "Everyone" rating.</div></li>
+  </ul>
+</div>
+
+<!-- 14 GROWTH -->
+<div class="section" id="growth">
+  <p class="section-meta">14 · Stage 2</p>
+  <h2 class="section-title">Growth & <span class="accent-purple">Monetization Strategy</span></h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-label">Month 1</div>
+      <div class="card-value">0 → first 500 users</div>
+      <div class="card-sub">Share in WhatsApp groups, university groups, mosque communities. Ask 10 friends to leave honest reviews — reviews are the Play Store algorithm.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Month 2–3</div>
+      <div class="card-value">ASO + organic</div>
+      <div class="card-sub">Optimise keywords: "prayer times Pakistan", "salah time Karachi", "Islamic planner". Add Urdu store listing.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Month 4+</div>
+      <div class="card-value">Premium conversions</div>
+      <div class="card-sub">At 5,000+ daily actives, 1–2% premium conversion = 50–100 purchases/month at Rs. 299 = real money.</div>
+    </div>
+  </div>
+
+  <div class="tip-purple"><strong>The realistic number:</strong> A well-built prayer app targeting South Asia with 10,000 DAU earns roughly $50–150/month from AdMob alone. Not a salary — but real, passive income from something you built in 10 days. The ceiling is much higher with premium and as the user base grows.</div>
+
+  <h4>Features to add post-launch (prioritised)</h4>
+  <ul class="checklist">
+    <li><span class="check-box"></span><div><strong>Athkar / Dhikr counter</strong> — high retention, users open it multiple times per day.</div></li>
+    <li><span class="check-box"></span><div><strong>Prayer history tracker</strong> — mark which prayers you completed. Streak gamification.</div></li>
+    <li><span class="check-box"></span><div><strong>Hijri calendar</strong> — show Islamic dates, important dates (Ramadan, Eid).</div></li>
+    <li><span class="check-box"></span><div><strong>Ramadan mode</strong> — Sehri and Iftar times, countdown. Publish the update 2 weeks before Ramadan for maximum impact.</div></li>
+    <li><span class="check-box"></span><div><strong>Multiple cities</strong> — travel mode, save favourite city. Premium feature.</div></li>
+  </ul>
+</div>
+
+<!-- FOOTER -->
+<div style="border-top: 1px solid var(--border); padding-top: 2rem; margin-top: 1rem; text-align: center;">
+  <p style="font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted2); letter-spacing: 0.1em; margin-bottom: 0.5rem;">وقت · WAQT · SMART PRAYER & STUDY PLANNER</p>
+  <p style="font-size: 13px; color: var(--muted); max-width: 500px; margin: 0 auto;">Stage 1 gets you marks. Stage 2 gets you users. The app is the same — only the audience changes.</p>
+</div>
+
+</div>
+</body>
+</html>
