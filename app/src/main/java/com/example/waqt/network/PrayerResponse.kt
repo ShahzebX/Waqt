@@ -22,7 +22,8 @@ data class Timings(
 
 data class DateInfo(
     val readable: String,
-    val hijri: HijriDate
+    val hijri: HijriDate,
+    val gregorian: GregorianDate
 )
 
 data class HijriDate(
@@ -33,4 +34,8 @@ data class HijriDate(
 data class HijriMonth(
     val en: String,
     val ar: String
+)
+
+data class GregorianDate(
+    val date: String
 )
