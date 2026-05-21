@@ -20,14 +20,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,6 +42,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -57,6 +56,9 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+internal const val PlannerSlotsEmptyStateTag = "planner_slots_empty_state"
+internal const val PlannerTasksEmptyStateTag = "planner_tasks_empty_state"
 
 @Composable
 fun PlannerScreen() {
@@ -90,7 +92,7 @@ fun PlannerScreen() {
 }
 
 @Composable
-private fun PlannerScreenContent(
+internal fun PlannerScreenContent(
     uiState: PlannerUiState,
     now: LocalTime,
     taskInput: String,
@@ -120,8 +122,8 @@ private fun PlannerScreenContent(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     item {
                         PlannerHeader(date = uiState.date)
@@ -136,9 +138,10 @@ private fun PlannerScreenContent(
                     item {
                         TimelineContainer {
                             if (uiState.slots.isEmpty()) {
-                                Text(
-                                    text = "Load prayer times to see study slots.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                EmptyStateCard(
+                                    modifier = Modifier.testTag(PlannerSlotsEmptyStateTag),
+                                    title = "No study slots yet",
+                                    message = "Load prayer times from Home to generate today's timeline."
                                 )
                             } else {
                                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -149,8 +152,14 @@ private fun PlannerScreenContent(
                             }
                         }
                     }
-                    if (uiState.tasks.isNotEmpty()) {
-                        item {
+                    item {
+                        if (uiState.tasks.isEmpty()) {
+                            EmptyStateCard(
+                                modifier = Modifier.testTag(PlannerTasksEmptyStateTag),
+                                title = "No tasks added",
+                                message = "Use quick add above to set today's focus."
+                            )
+                        } else {
                             TaskList(tasks = uiState.tasks)
                         }
                     }
@@ -165,7 +174,7 @@ private fun PlannerHeader(date: LocalDate) {
     Column {
         Text(
             text = "Study Planner",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -278,7 +287,7 @@ private fun StudySlotRow(
                 )
                 Text(
                     text = "${slot.start.format(timeFormatter)} - ${slot.end.format(timeFormatter)}",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -346,17 +355,50 @@ private fun TaskList(tasks: List<String>) {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    TextButton(
+                    Text(
                         modifier = Modifier.align(Alignment.CenterEnd),
-                        onClick = {},
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                        Text(text = "Plan")
-                    }
+                        text = "Planned",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyStateCard(
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

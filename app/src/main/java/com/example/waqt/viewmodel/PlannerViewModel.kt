@@ -58,7 +58,7 @@ class PlannerViewModel(
                         prayers = emptyList(),
                         slots = emptyList(),
                         isLoading = false,
-                        errorMessage = "Prayer times unavailable. Load from Home first."
+                        errorMessage = null
                     )
                 }
             } else {
