@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -51,6 +57,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.model.Prayer
 import com.example.waqt.repository.PrayerRepository
 import com.example.waqt.ui.components.CalculationMethodSelector
+import com.example.waqt.ui.components.WaqtCard
+import com.example.waqt.ui.components.WaqtCardVariant
+import com.example.waqt.ui.components.WaqtLoadingState
+import com.example.waqt.ui.components.WaqtPrimaryButton
+import com.example.waqt.ui.components.WaqtScreenHeader
+import com.example.waqt.ui.theme.GoldBright
+import com.example.waqt.ui.theme.GoldSoft
+import com.example.waqt.ui.theme.SecondaryGold
 import com.example.waqt.viewmodel.PrayerUiState
 import com.example.waqt.viewmodel.PrayerViewModel
 import com.example.waqt.viewmodel.PrayerViewModelFactory
@@ -159,15 +173,11 @@ internal fun HomeScreenContent(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         when {
-            uiState.isLoading && uiState.prayers.isEmpty() -> CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.secondary
-            )
+            uiState.isLoading && uiState.prayers.isEmpty() -> WaqtLoadingState()
             uiState.prayers.isNotEmpty() -> {
                 val displayDate = uiState.prayers.firstOrNull()?.date.toDisplayDate(now.toLocalDate())
                 val nextPrayerInfo = remember(uiState.prayers, now) {
@@ -181,9 +191,10 @@ internal fun HomeScreenContent(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     item {
-                        DateHeader(
-                            gregorianDate = displayDate.format(gregorianDateFormatter),
-                            hijriDate = displayDate.toHijriDate()
+                        WaqtScreenHeader(
+                            title = "Home",
+                            subtitle = displayDate.format(gregorianDateFormatter),
+                            badge = displayDate.toHijriDate().take(12)
                         )
                     }
                     item {
@@ -245,75 +256,46 @@ internal fun HomeScreenContent(
 }
 
 @Composable
-private fun DateHeader(
-    gregorianDate: String,
-    hijriDate: String
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = gregorianDate,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = hijriDate,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
 private fun NextPrayerCard(
     prayerName: String,
     prayerTime: String,
     countdown: String
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
-        )
-    ) {
+    WaqtCard(modifier = Modifier.fillMaxWidth(), variant = WaqtCardVariant.Hero) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Next Prayer",
+                text = "NEXT PRAYER",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                color = Color.White.copy(alpha = 0.75f),
+                fontWeight = FontWeight.SemiBold
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = prayerName,
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = Color.White,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = prayerTime,
                 style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                color = GoldSoft
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = countdown,
                 modifier = Modifier.testTag(HomeCountdownTag),
                 style = MaterialTheme.typography.displayLarge.copy(
                     fontFamily = FontFamily.Monospace,
                     fontFeatureSettings = "tnum",
-                    letterSpacing = 0.sp
+                    letterSpacing = 0.sp,
+                    fontWeight = FontWeight.Bold
                 ),
-                color = MaterialTheme.colorScheme.secondary
+                color = GoldBright
             )
         }
     }
@@ -343,33 +325,36 @@ private fun PrayerTimePill(
     active: Boolean
 ) {
     val shape = RoundedCornerShape(16.dp)
-    val borderColor = if (active) {
-        MaterialTheme.colorScheme.secondary
+    val scale by animateFloatAsState(
+        targetValue = if (active) 1.04f else 1f,
+        animationSpec = tween(280),
+        label = "pillScale"
+    )
+    val borderColor = if (active) SecondaryGold else MaterialTheme.colorScheme.outline
+    val containerBrush = if (active) {
+        Brush.linearGradient(listOf(SecondaryGold.copy(alpha = 0.2f), GoldSoft.copy(alpha = 0.12f)))
     } else {
-        MaterialTheme.colorScheme.outline
-    }
-    val containerColor = if (active) {
-        MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f)
-    } else {
-        MaterialTheme.colorScheme.surface
+        Brush.linearGradient(listOf(Color.White, Color.White))
     }
 
     Column(
         modifier = Modifier
-            .background(containerColor, shape)
-            .border(width = 1.dp, color = borderColor, shape = shape)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .scale(scale)
+            .background(containerBrush, shape)
+            .border(width = if (active) 2.dp else 1.dp, color = borderColor, shape = shape)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = prayer.name,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium
         )
         Text(
             text = formatPrayerTime(prayer.time),
             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (active) SecondaryGold else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -385,45 +370,22 @@ private fun PlannerSummaryCard(
         "$remainingBlocks study blocks remaining today"
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
+    WaqtCard(modifier = Modifier.fillMaxWidth(), variant = WaqtCardVariant.Elevated) {
+        Text(
+            text = "TODAY'S STUDY PLAN",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold
         )
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
-            Text(
-                text = "Today's Study Plan",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = blockLabel,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = onViewPlanner,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ),
-            ) {
-                Text(
-                    text = "View Planner",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = blockLabel,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        WaqtPrimaryButton(text = "Open Planner", onClick = onViewPlanner)
     }
 }
 
@@ -431,39 +393,20 @@ private fun PlannerSummaryCard(
 private fun NotificationPermissionCard(
     onRequestNotifications: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
+    WaqtCard(modifier = Modifier.fillMaxWidth(), variant = WaqtCardVariant.Glass) {
+        Text(
+            text = "Enable prayer reminders",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
         )
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-            Text(
-                text = "Enable prayer reminders",
-                style = MaterialTheme.typography.titleSmall
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Allow notifications to get reminders 10 minutes before each prayer.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(
-                onClick = onRequestNotifications,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Text(text = "Allow notifications")
-            }
-        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Allow notifications to get reminders 10 minutes before each prayer.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        WaqtPrimaryButton(text = "Allow notifications", onClick = onRequestNotifications)
     }
 }
 
@@ -477,25 +420,14 @@ private fun ManualCityFallback(
     onLoadCityPrayerTimes: () -> Unit,
     onRequestLocation: () -> Unit
 ) {
-    Card(
+    WaqtCard(
         modifier = Modifier
             .padding(24.dp)
             .fillMaxWidth()
             .testTag(HomeManualFallbackTag),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
+        variant = WaqtCardVariant.Elevated
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "Allow location for automatic prayer times",
                 style = MaterialTheme.typography.titleMedium,
@@ -520,16 +452,11 @@ private fun ManualCityFallback(
                 onMethodChange = onMethodChange
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Button(
+            WaqtPrimaryButton(
+                text = "Load by city",
                 onClick = onLoadCityPrayerTimes,
-                enabled = city.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                )
-            ) {
-                Text(text = "Load by city")
-            }
+                enabled = city.isNotBlank()
+            )
             TextButton(
                 onClick = onRequestLocation,
                 colors = ButtonDefaults.textButtonColors(

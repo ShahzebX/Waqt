@@ -9,7 +9,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,11 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -45,6 +40,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.ui.components.CalculationMethodSelector
 import com.example.waqt.ui.components.PakistaniCityAutocompleteField
+import com.example.waqt.ui.components.WaqtCard
+import com.example.waqt.ui.components.WaqtCardVariant
+import com.example.waqt.ui.components.WaqtPrimaryButton
+import com.example.waqt.ui.components.WaqtScreenHeader
+import com.example.waqt.ui.components.WaqtSectionTitle
+import com.example.waqt.ui.theme.GoldGlow
+import com.example.waqt.ui.theme.SecondaryGold
+import com.example.waqt.ui.theme.SuccessGreen
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.waqt.viewmodel.SettingsUiState
 import com.example.waqt.viewmodel.SettingsViewModel
 import com.example.waqt.viewmodel.SettingsViewModelFactory
@@ -132,9 +138,7 @@ internal fun SettingsScreenContent(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             horizontal = 16.dp,
             vertical = 24.dp
@@ -142,18 +146,11 @@ internal fun SettingsScreenContent(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "Settings",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Location, prayer calculation, and reminders",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            WaqtScreenHeader(
+                title = "Settings",
+                subtitle = "Location, prayer calculation, and reminders",
+                badge = if (uiState.pakistanCityCount > 0) "${uiState.pakistanCityCount}" else null
+            )
         }
 
         item {
@@ -178,26 +175,21 @@ internal fun SettingsScreenContent(
                     fieldTestTag = SettingsCityFieldTag
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = onSaveCity,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(SettingsSaveCityButtonTag),
-                    enabled = cityDraft.isNotBlank() && !uiState.isSaving,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        color = SecondaryGold,
+                        strokeWidth = 3.dp
                     )
-                ) {
-                    if (uiState.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.height(20.dp),
-                            color = MaterialTheme.colorScheme.onSecondary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(text = "Save & update prayer times")
-                    }
+                } else {
+                    WaqtPrimaryButton(
+                        text = "Save & update prayer times",
+                        onClick = onSaveCity,
+                        modifier = Modifier.testTag(SettingsSaveCityButtonTag),
+                        enabled = cityDraft.isNotBlank()
+                    )
                 }
                 TextButton(
                     onClick = onRequestLocationForSave,
@@ -297,30 +289,10 @@ private fun SettingsSectionCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            content()
-        }
+    WaqtCard(modifier = modifier, variant = WaqtCardVariant.Elevated) {
+        WaqtSectionTitle(text = title)
+        Spacer(modifier = Modifier.height(12.dp))
+        content()
     }
 }
 
@@ -346,15 +318,14 @@ private fun SettingsInfoRow(label: String, value: String) {
 
 @Composable
 private fun FeedbackText(text: String, isError: Boolean) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (isError) {
-            MaterialTheme.colorScheme.error
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
-    )
+    WaqtCard(variant = WaqtCardVariant.Glass) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isError) MaterialTheme.colorScheme.error else SuccessGreen,
+            fontWeight = FontWeight.Medium
+        )
+    }
 }
 
 private fun Context.hasNotificationPermission(): Boolean {

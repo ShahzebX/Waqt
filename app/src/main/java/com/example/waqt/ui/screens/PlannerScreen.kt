@@ -1,7 +1,6 @@
 package com.example.waqt.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +46,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.model.Task
+import com.example.waqt.ui.components.WaqtCard
+import com.example.waqt.ui.components.WaqtCardVariant
+import com.example.waqt.ui.components.WaqtEmptyState
+import com.example.waqt.ui.components.WaqtLoadingState
+import com.example.waqt.ui.components.WaqtPulsingDot
+import com.example.waqt.ui.components.WaqtScreenHeader
+import com.example.waqt.ui.components.WaqtSectionTitle
+import com.example.waqt.ui.theme.CardShape
+import com.example.waqt.ui.theme.GoldGlow
+import com.example.waqt.ui.theme.SecondaryGold
 import com.example.waqt.viewmodel.PlannerUiState
 import com.example.waqt.viewmodel.PlannerViewModel
 import com.example.waqt.viewmodel.PlannerViewModelFactory
@@ -106,18 +112,9 @@ internal fun PlannerScreenContent(
     onTaskDoneChange: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         when {
-            uiState.isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
+            uiState.isLoading -> WaqtLoadingState()
             uiState.errorMessage != null -> {
                 Text(
                     text = uiState.errorMessage,
@@ -132,7 +129,11 @@ internal fun PlannerScreenContent(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     item {
-                        PlannerHeader(date = uiState.date)
+                        WaqtScreenHeader(
+                            title = "Planner",
+                            subtitle = uiState.date.format(dateFormatter),
+                            badge = "${uiState.slots.size} slots"
+                        )
                     }
                     item {
                         InlineTaskInput(
@@ -144,7 +145,7 @@ internal fun PlannerScreenContent(
                     item {
                         TimelineContainer {
                             if (uiState.slots.isEmpty()) {
-                                EmptyStateCard(
+                                WaqtEmptyState(
                                     modifier = Modifier.testTag(PlannerSlotsEmptyStateTag),
                                     title = "No study slots yet",
                                     message = "Load prayer times from Home to generate today's timeline."
@@ -160,7 +161,7 @@ internal fun PlannerScreenContent(
                     }
                     item {
                         if (uiState.tasks.isEmpty()) {
-                            EmptyStateCard(
+                            WaqtEmptyState(
                                 modifier = Modifier.testTag(PlannerTasksEmptyStateTag),
                                 title = "No tasks added",
                                 message = "Use quick add above to set today's focus."
@@ -179,34 +180,14 @@ internal fun PlannerScreenContent(
 }
 
 @Composable
-private fun PlannerHeader(date: LocalDate) {
-    Column {
-        Text(
-            text = "Study Planner",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = date.format(dateFormatter),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
 private fun InlineTaskInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSubmit: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Quick add",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+    WaqtCard(variant = WaqtCardVariant.Glass) {
+        WaqtSectionTitle(text = "Quick add focus")
+        Spacer(modifier = Modifier.height(10.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -223,8 +204,14 @@ private fun InlineTaskInput(
                 },
             placeholder = { Text(text = "Press Enter to add task") },
             singleLine = true,
+            shape = CardShape,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onSubmit() })
+            keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = SecondaryGold,
+                focusedLabelColor = SecondaryGold,
+                cursorColor = SecondaryGold
+            )
         )
     }
 }
@@ -234,15 +221,18 @@ private fun TimelineContainer(content: @Composable () -> Unit) {
     Row {
         Box(
             modifier = Modifier
-                .width(20.dp)
+                .width(24.dp)
                 .fillMaxSize()
         ) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(2.dp)
+                    .align(Alignment.TopCenter)
+                    .width(3.dp)
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                        RoundedCornerShape(2.dp)
+                    )
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
@@ -261,58 +251,42 @@ private fun StudySlotRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
     ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .offset(y = 8.dp)
-                .background(
-                    color = if (isActive) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                )
+        WaqtPulsingDot(
+            active = isActive,
+            modifier = Modifier.offset(y = 18.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Card(
+        WaqtCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isActive) {
-                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                }
-            ),
-            border = androidx.compose.foundation.BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline
-            )
+            variant = if (isActive) WaqtCardVariant.Glass else WaqtCardVariant.Elevated
         ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            Text(
+                text = "After ${slot.anchorPrayer}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "${slot.start.format(timeFormatter)} – ${slot.end.format(timeFormatter)}",
+                style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "${slot.duration.toMinutes()} min focus window",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (isActive) {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "After ${slot.anchorPrayer}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "${slot.start.format(timeFormatter)} - ${slot.end.format(timeFormatter)}",
-                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = "● Active now",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = SecondaryGold,
                     fontWeight = FontWeight.SemiBold
                 )
-                Text(
-                    text = "${slot.duration.toMinutes()} min focus window",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (isActive) {
-                    Text(
-                        text = "Active window",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
             }
         }
     }
@@ -324,92 +298,46 @@ private fun TaskList(
     onTaskDoneChange: (Int, Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = "Today's focus",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        WaqtSectionTitle(text = "Today's focus")
         tasks.forEach { task ->
-            Card(
+            WaqtCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                variant = if (task.isDone) WaqtCardVariant.Glass else WaqtCardVariant.Elevated
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = task.isDone,
                         onCheckedChange = { checked -> onTaskDoneChange(task.id, checked) },
                         colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.secondary,
+                            checkedColor = SecondaryGold,
                             checkmarkColor = MaterialTheme.colorScheme.onSecondary,
                             uncheckedColor = MaterialTheme.colorScheme.outline
                         )
                     )
                     Text(
                         text = task.title,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = if (task.isDone) {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
+                        fontWeight = if (task.isDone) FontWeight.Normal else FontWeight.Medium,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = if (task.isDone) "Done" else "Planned",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = SecondaryGold,
+                        modifier = Modifier
+                            .background(GoldGlow, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun EmptyStateCard(
-    title: String,
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

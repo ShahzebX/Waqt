@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,9 +44,19 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.qibla.CompassSensorStatus
+import com.example.waqt.ui.components.WaqtCard
+import com.example.waqt.ui.components.WaqtCardVariant
+import com.example.waqt.ui.components.WaqtLoadingState
+import com.example.waqt.ui.components.WaqtPrimaryButton
+import com.example.waqt.ui.components.WaqtScreenHeader
+import com.example.waqt.ui.theme.GoldBright
+import com.example.waqt.ui.theme.GoldSoft
+import com.example.waqt.ui.theme.NavyMid
 import com.example.waqt.ui.theme.PrimaryNavy
 import com.example.waqt.ui.theme.SecondaryGold
 import com.example.waqt.ui.theme.SoftIceBlue
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import com.example.waqt.viewmodel.QiblaLocationSource
 import com.example.waqt.viewmodel.QiblaUiState
 import com.example.waqt.viewmodel.QiblaViewModel
@@ -104,32 +113,20 @@ internal fun QiblaScreenContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Qibla Compass",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "Rotate your phone until the needle points to the Kaaba",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
+        WaqtScreenHeader(
+            title = "Qibla",
+            subtitle = "Rotate until the golden needle meets the Kaaba",
+            badge = if (uiState.isFacingQibla) "Aligned" else null
+        )
 
         when {
             uiState.isLoadingLocation -> {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                WaqtLoadingState(modifier = Modifier.height(320.dp))
             }
             else -> {
                 QiblaCompassCard(
@@ -142,16 +139,7 @@ internal fun QiblaScreenContent(
         QiblaInfoCard(uiState = uiState)
 
         if (uiState.requiresManualLocation) {
-            Button(
-                onClick = onRequestLocation,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                )
-            ) {
-                Text(text = "Use GPS for Qibla")
-            }
+            WaqtPrimaryButton(text = "Use GPS for Qibla", onClick = onRequestLocation)
         }
 
         uiState.infoMessage?.let { message ->
@@ -181,31 +169,19 @@ private fun QiblaCompassCard(
         uiState.qiblaBearing
     }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
-    ) {
+    WaqtCard(modifier = modifier, variant = WaqtCardVariant.Elevated) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 24.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (uiState.isFacingQibla) {
                 Text(
-                    text = "Facing Qibla",
+                    text = "✓ Facing Qibla",
                     modifier = Modifier.testTag(QiblaAlignedTag),
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                    color = SecondaryGold,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
@@ -248,7 +224,11 @@ private fun QiblaCompassCard(
 
 private fun DrawScope.drawCompassFace(center: Offset, radius: Float) {
     drawCircle(
-        color = SoftIceBlue,
+        brush = Brush.radialGradient(
+            colors = listOf(SoftIceBlue, SoftIceBlue.copy(alpha = 0.6f)),
+            center = center,
+            radius = radius
+        ),
         radius = radius,
         center = center
     )
@@ -256,10 +236,16 @@ private fun DrawScope.drawCompassFace(center: Offset, radius: Float) {
         color = PrimaryNavy,
         radius = radius,
         center = center,
-        style = Stroke(width = 3.dp.toPx())
+        style = Stroke(width = 4.dp.toPx())
     )
     drawCircle(
-        color = PrimaryNavy.copy(alpha = 0.15f),
+        color = GoldSoft.copy(alpha = 0.4f),
+        radius = radius - 8.dp.toPx(),
+        center = center,
+        style = Stroke(width = 1.5.dp.toPx())
+    )
+    drawCircle(
+        color = NavyMid.copy(alpha = 0.2f),
         radius = radius * 0.08f,
         center = center
     )
@@ -270,10 +256,10 @@ private fun DrawScope.drawNeedle(center: Offset, radius: Float) {
     val needleLength = radius * 0.72f
     val tip = Offset(center.x, center.y - needleLength)
     drawLine(
-        color = SecondaryGold,
+        color = GoldBright,
         start = center,
         end = tip,
-        strokeWidth = 6.dp.toPx(),
+        strokeWidth = 7.dp.toPx(),
         cap = StrokeCap.Round
     )
     drawLine(
@@ -287,22 +273,8 @@ private fun DrawScope.drawNeedle(center: Offset, radius: Float) {
 
 @Composable
 private fun QiblaInfoCard(uiState: QiblaUiState) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    WaqtCard(modifier = Modifier.fillMaxWidth(), variant = WaqtCardVariant.Glass) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = "Bearing to Makkah",
                 style = MaterialTheme.typography.titleSmall,
@@ -343,21 +315,9 @@ private fun QiblaInfoCard(uiState: QiblaUiState) {
 
 @Composable
 private fun StatusMessageCard(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline
-        )
-    ) {
+    WaqtCard(modifier = Modifier.fillMaxWidth(), variant = WaqtCardVariant.Glass) {
         Text(
             text = message,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

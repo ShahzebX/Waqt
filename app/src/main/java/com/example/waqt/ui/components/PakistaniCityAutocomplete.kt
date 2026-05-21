@@ -8,15 +8,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.waqt.ui.theme.CardShape
+import com.example.waqt.ui.theme.OutlineSoft
+import com.example.waqt.ui.theme.SecondaryGold
 
 internal const val PakistaniCitySuggestionTag = "pakistani_city_suggestion"
 
@@ -54,33 +57,30 @@ fun PakistaniCityAutocompleteField(
                 )
             },
             singleLine = true,
-            enabled = enabled
+            enabled = enabled,
+            shape = CardShape,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = SecondaryGold,
+                focusedLabelColor = SecondaryGold,
+                cursorColor = SecondaryGold
+            )
         )
         if (suggestions.isNotEmpty() && enabled) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline
-                )
+            WaqtCard(
+                modifier = Modifier.padding(top = 8.dp),
+                variant = WaqtCardVariant.Glass
             ) {
-                LazyColumn(modifier = Modifier.heightIn(max = 220.dp)) {
+                LazyColumn(modifier = Modifier.heightIn(max = 240.dp)) {
                     items(suggestions, key = { it }) { city ->
                         Text(
                             text = city,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onSuggestionSelected(city) }
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .padding(vertical = 10.dp)
                                 .testTag("$PakistaniCitySuggestionTag:$city")
                         )
                     }

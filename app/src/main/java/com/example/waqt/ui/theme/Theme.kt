@@ -7,17 +7,22 @@ import androidx.compose.runtime.Composable
 private val WaqtColorScheme = lightColorScheme(
     primary = PrimaryNavy,
     onPrimary = OnPrimaryNavy,
-    primaryContainer = SoftIceBlue,
-    onPrimaryContainer = PrimaryNavy,
+    primaryContainer = NavyMid,
+    onPrimaryContainer = OnPrimaryNavy,
     secondary = SecondaryGold,
     onSecondary = PrimaryNavy,
+    secondaryContainer = GoldSoft,
+    onSecondaryContainer = PrimaryNavy,
+    tertiary = NavySoft,
+    onTertiary = OnPrimaryNavy,
     background = NeutralBackground,
     onBackground = TextPrimary,
-    surface = SoftIceBlue,
+    surface = SurfaceElevated,
     onSurface = TextPrimary,
     surfaceVariant = SoftIceBlue,
     onSurfaceVariant = TextMuted,
     outline = OutlineStroke,
+    outlineVariant = OutlineSoft,
     error = ErrorColor,
     onError = OnPrimaryNavy
 )
@@ -27,6 +32,7 @@ fun WaqtTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = WaqtColorScheme,
         typography = Typography,
+        shapes = WaqtShapes,
         content = content
     )
 }
