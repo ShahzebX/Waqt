@@ -6,73 +6,104 @@ argument-hint: "Specify the feature or screen to implement (e.g., HomeScreen UI,
 
 # Waqt Android App Builder
 
-Build the Waqt (وقت) prayer-times and study-planner app using Jetpack Compose, Room, and MVVM, aligned with the project's build plan and UI/UX rules.
+Build the Waqt (وقت) prayer-times and study-planner app using Jetpack Compose, Room, and MVVM. The **build plan** defines scope; **`design.md`** defines visual and UX rules; this skill defines how agents implement and verify work.
 
 ## When to Use
 
-- Implementing core Waqt features: prayer times, countdown, planner, Qibla, settings, notifications.
-- Scaffolding MVVM architecture with Compose navigation.
-- Wiring Aladhan API + Room caching + DataStore settings.
-- Applying the Waqt design system and screen specifications.
+- Stage 1 features: prayer times, countdown, planner, Qibla, settings, notifications
+- Scaffolding MVVM, navigation, API/Room/DataStore wiring
+- Applying the Midnight Blue & Gold design system
+- Fixing permission, offline, or sensor fallback behavior
+
+**Stage 2** (AdMob, billing, widget, Play Store) — only when the user explicitly requests monetization or publishing work.
 
 ## Required References
 
-- Build plan: [waqt_build_plan.html](./references/waqt_build_plan.html)
-- Design system: [design.md](./references/design.md)
+| Document | Path | Purpose |
+|----------|------|---------|
+| Build plan | [waqt_build_plan.html](./references/waqt_build_plan.html) | Features, architecture, API, algorithms, sprint |
+| Design system | [design.md](./references/design.md) | Colors, typography, screen UX, strict rules |
+
+Read both before changing UI or architecture.
+
+## Project Facts (canonical)
+
+- **Package:** `com.example.waqt`
+- **Min SDK:** 26
+- **Aladhan base URL:** `https://api.aladhan.com/v1/`
+- **Calculation methods (Aladhan `method` param):** `1` = Karachi (default), `2` = ISNA, `3` = MWL — see `PrayerRepository` constants
+- **Default city/country:** Karachi, PK
 
 ## Procedure
 
-1. **Align scope to Stage 1** unless the user explicitly asks for Stage 2 monetization features.
-2. **Follow the architecture layout** from the build plan (ui/, viewmodel/, repository/, network/, database/, worker/, model/).
-3. **Implement data flow**: UI → ViewModel → Repository → Network/Room. Avoid side effects in composables.
-4. **Network + caching**:
-   - Use Retrofit for Aladhan API (base URL and methods per build plan).
-   - Cache prayer times in Room and fall back to cached data on network failure.
-5. **Room schema**:
-   - Use PrayerEntity and TaskEntity fields from the build plan.
-   - Expose DAOs and WaqtDatabase singleton.
-6. **Planner logic**:
-   - Generate study slots from prayer gaps using the build plan algorithm.
-   - Use inline quick-add fields (no bottom sheets) in Planner screen.
-7. **Compose UI**:
-   - Home: Hero card, lazy row, summary.
-   - Planner: Vertical timeline.
-   - Qibla: Canvas compass.
-   - Settings: location, calculation method, notifications, display.
-8. **Design constraints (must follow)**:
-   - Use the "Midnight Blue & Gold" palette from `design.md`.
-   - Primary/Headers/Icons: #0F172A. Background: #F8FAFC. Surface: #DBEAFE. Highlight/CTA: #D97706.
-   - Typography: Plus Jakarta Sans. Countdown and prayer times must use tabular numerals.
-   - Layout: 8px grid, 16px horizontal margins, 24px spacing between major sections.
-   - Components: cards use Soft Ice Blue with a 1px outline (#CBD5E1); primary actions use Warm Gold.
-   - STRICT: Do not use red/amber for tasks; error red is strictly for system failures.
-   - STRICT: Do not use bottom sheets or dialogs for the Planner. You MUST use inline quick-add fields.
-   - Timeline: TertiaryIce vertical line with circular prayer anchors.
-   - Use BottomNavigationBar; no hamburger menus.
-9. **Permissions + privacy handling**:
-   - Implement only required permissions for selected features (INTERNET, ACCESS_FINE_LOCATION/ACCESS_COARSE_LOCATION, POST_NOTIFICATIONS for Android 13+, RECEIVE_BOOT_COMPLETED for notification restore).
-   - Request runtime permissions in context with clear rationale; when denied, keep functional fallbacks (e.g., manual city input when location access is denied).
-   - Declare compass sensor capability as optional and handle unsupported/low-accuracy sensor states gracefully in UI.
-   - Keep user data minimal and local-first: do not log precise location/task content unnecessarily and do not send personal data beyond what the prayer-time API requires.
-10. **Testing + verification requirements**:
+### 1. Scope
+Default to **Stage 1** only unless the user asks for Stage 2.
 
-- Add/update unit tests for planner slot generation, ViewModel state transitions, API parsing, and repository cache fallback behavior.
-- Add/update Compose UI tests for critical flows (Home countdown render, Planner inline quick-add, Settings toggles, and denied-permission fallback states).
-- Validate integration paths for Room read/write, offline fallback, and notification scheduling trigger behavior.
-- For permission-dependent features, verify both grant and deny paths, first-run prompts, and post-denial recovery from Settings.
+### 2. Architecture
+Follow package layout in build plan §03:
 
-11. **Definition of done before output**:
+`ui/`, `viewmodel/` (+ `*ViewModelFactory`), `repository/`, `network/`, `database/`, `location/`, `settings/`, `qibla/`, `worker/`, `model/`, `ui/components/`
 
-- Build succeeds and relevant existing test suites pass.
-- New or changed logic has matching test coverage.
-- Offline mode, denied permissions, and missing compass sensor behavior are explicitly verified.
+**Data flow:** UI → ViewModel → Repository → (Retrofit | Room | DataStore | sensors). No network or DB calls inside `@Composable` bodies.
+
+### 3. Network + caching
+- Retrofit `AladhanApi`: `timings`, `timingsByCity`
+- Parse `PrayerResponse` including `date.gregorian.date` for cache keys
+- `PrayerRepository`: network first → `insertPrayers` → on failure return today's Room cache
+
+### 4. Room
+- `PrayerEntity`, `TaskEntity` per build plan
+- `TaskRepository` for persisted tasks when implementing full task manager
+
+### 5. Planner
+- `generateStudySlots()` gap rules: &lt;45 skip, 45–89 short study, 90–179 study, ≥180 study + break
+- **STRICT:** Inline quick-add on Planner — **no** bottom sheets or dialogs
+
+### 6. Screens
+
+| Screen | Requirements |
+|--------|----------------|
+| **Home** | Hero countdown (1s tick), prayer lazy row, planner summary, GPS/city fallback, notification prompt |
+| **Planner** | Vertical timeline, study slots from cached prayers, inline task field |
+| **Qibla** | Fixed 🕋 at top; gold Canvas needle rotates (`qiblaBearing - azimuth`); portrait sensor remap; city/GPS fallback — see `design.md` |
+| **Settings** | City save + API refresh, GPS refresh, method chips, notification toggle, display section — `SettingsViewModel` + DataStore |
+
+### 7. Design (must follow `design.md`)
+- Colors: `#0F172A`, `#F8FAFC`, `#DBEAFE`, `#D97706`, `#CBD5E1`
+- Fonts: **Hanken Grotesk** (headlines), **Inter** (body) — not Plus Jakarta unless design is updated
+- Tabular numerals (`tnum`) for prayer times and countdown
+- 16dp horizontal margins, 24dp between sections
+- Bottom `NavigationBar` only — no hamburger menu
+
+### 8. Permissions + privacy
+- Manifest: INTERNET, location, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED; optional compass
+- Runtime prompts with rationale; fallbacks: manual city (Home/Settings), Qibla city map, compass-unavailable copy
+- Local-first; no logging of precise location or task text
+
+### 9. Testing
+Update when changing logic:
+
+**Unit:** planner slots, Prayer/Settings/Qibla ViewModels, API parsing, repository cache fallback
+
+**Compose UI:** Home countdown, Planner quick-add, Settings toggles, permission-denied states
+
+### 10. Definition of done
+- `./gradlew test` passes
+- Build succeeds (`assembleDebug`)
+- New logic has tests
+- Offline, permission deny, and missing compass paths verified on device or via tests
 
 ## Output Expectations
 
-- Code compiles with API 26+.
-- UI matches the Waqt design system and screen specs.
-- MVVM separation is preserved.
-- Offline behavior works via Room cache.
-- Permission-sensitive features include graceful fallback UX.
-- Privacy handling follows data-minimization and local-first storage rules.
-- Testing and verification cover changed logic and critical user flows.
+- Compiles at API 26+
+- Matches `design.md` and build plan for the screen touched
+- MVVM preserved; DataStore settings shared across Home/Settings/Qibla
+- Stage 2 code not added unless requested
+
+## Common Mistakes (avoid)
+
+1. Using Aladhan `method=18` for Karachi — use **`1`** per `PrayerRepository`
+2. Fixed N/E/S/W on Qibla screen top — use **fixed Kaaba + rotating needle**
+3. Bottom sheet for planner tasks — use **inline field**
+4. Wrong package name `com.waqt.planner` in new code — use **`com.example.waqt`**
+5. Rotating the Kaaba emoji instead of the needle

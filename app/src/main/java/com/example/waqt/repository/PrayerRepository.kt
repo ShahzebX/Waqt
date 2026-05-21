@@ -4,6 +4,7 @@ import com.example.waqt.database.PrayerDao
 import com.example.waqt.database.entities.PrayerEntity
 import com.example.waqt.model.Prayer
 import com.example.waqt.network.AladhanApi
+import com.example.waqt.network.AladhanConstants
 import com.example.waqt.network.DateInfo
 import com.example.waqt.network.PrayerResponse
 import com.example.waqt.network.Timings
@@ -76,12 +77,12 @@ class PrayerRepository(
     }
 
     companion object {
-        const val METHOD_KARACHI = 1
-        const val METHOD_ISNA = 2
-        const val METHOD_MWL = 3
-        const val DEFAULT_METHOD = METHOD_KARACHI
-        const val DEFAULT_COUNTRY = "PK"
-        const val DEFAULT_CITY = "Karachi"
+        const val METHOD_KARACHI = AladhanConstants.METHOD_KARACHI
+        const val METHOD_ISNA = AladhanConstants.METHOD_ISNA
+        const val METHOD_MWL = AladhanConstants.METHOD_MWL
+        const val DEFAULT_METHOD = AladhanConstants.DEFAULT_METHOD
+        const val DEFAULT_COUNTRY = AladhanConstants.DEFAULT_COUNTRY
+        const val DEFAULT_CITY = AladhanConstants.DEFAULT_CITY
     }
 }
 

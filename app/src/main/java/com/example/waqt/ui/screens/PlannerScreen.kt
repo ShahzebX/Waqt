@@ -24,6 +24,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.waqt.model.Task
 import com.example.waqt.viewmodel.PlannerUiState
 import com.example.waqt.viewmodel.PlannerViewModel
 import com.example.waqt.viewmodel.PlannerViewModelFactory
@@ -59,6 +62,7 @@ import java.util.Locale
 
 internal const val PlannerSlotsEmptyStateTag = "planner_slots_empty_state"
 internal const val PlannerTasksEmptyStateTag = "planner_tasks_empty_state"
+internal const val PlannerQuickAddFieldTag = "planner_quick_add_field"
 
 @Composable
 fun PlannerScreen() {
@@ -87,7 +91,8 @@ fun PlannerScreen() {
         onTaskSubmit = {
             plannerViewModel.addTask(taskInput)
             taskInput = ""
-        }
+        },
+        onTaskDoneChange = plannerViewModel::toggleTaskDone
     )
 }
 
@@ -98,6 +103,7 @@ internal fun PlannerScreenContent(
     taskInput: String,
     onTaskInputChange: (String) -> Unit,
     onTaskSubmit: () -> Unit,
+    onTaskDoneChange: (Int, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -160,7 +166,10 @@ internal fun PlannerScreenContent(
                                 message = "Use quick add above to set today's focus."
                             )
                         } else {
-                            TaskList(tasks = uiState.tasks)
+                            TaskList(
+                                tasks = uiState.tasks,
+                                onTaskDoneChange = onTaskDoneChange
+                            )
                         }
                     }
                 }
@@ -203,6 +212,7 @@ private fun InlineTaskInput(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag(PlannerQuickAddFieldTag)
                 .onKeyEvent { event ->
                     if (event.key == Key.Enter && event.type == KeyEventType.KeyUp) {
                         onSubmit()
@@ -309,7 +319,10 @@ private fun StudySlotRow(
 }
 
 @Composable
-private fun TaskList(tasks: List<String>) {
+private fun TaskList(
+    tasks: List<Task>,
+    onTaskDoneChange: (Int, Boolean) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Today's focus",
@@ -329,35 +342,33 @@ private fun TaskList(tasks: List<String>) {
                     color = MaterialTheme.colorScheme.outline
                 )
             ) {
-                Box(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(end = 56.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shape = CircleShape
-                                )
+                    Checkbox(
+                        checked = task.isDone,
+                        onCheckedChange = { checked -> onTaskDoneChange(task.id, checked) },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = MaterialTheme.colorScheme.secondary,
+                            checkmarkColor = MaterialTheme.colorScheme.onSecondary,
+                            uncheckedColor = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = task,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    )
                     Text(
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                        text = "Planned",
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (task.isDone) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = if (task.isDone) "Done" else "Planned",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.secondary
                     )

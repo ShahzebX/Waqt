@@ -26,7 +26,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -51,6 +50,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.model.Prayer
 import com.example.waqt.repository.PrayerRepository
+import com.example.waqt.ui.components.CalculationMethodSelector
 import com.example.waqt.viewmodel.PrayerUiState
 import com.example.waqt.viewmodel.PrayerViewModel
 import com.example.waqt.viewmodel.PrayerViewModelFactory
@@ -71,21 +71,6 @@ private val locationPermissions = arrayOf(
 
 internal const val HomeCountdownTag = "home_countdown"
 internal const val HomeManualFallbackTag = "home_manual_fallback"
-
-private val calculationMethods = listOf(
-    CalculationMethodOption(
-        id = PrayerRepository.METHOD_KARACHI,
-        label = "Karachi"
-    ),
-    CalculationMethodOption(
-        id = PrayerRepository.METHOD_ISNA,
-        label = "ISNA"
-    ),
-    CalculationMethodOption(
-        id = PrayerRepository.METHOD_MWL,
-        label = "MWL"
-    )
-)
 
 @Composable
 fun HomeScreen(
@@ -552,32 +537,6 @@ private fun ManualCityFallback(
                 )
             ) {
                 Text(text = "Use GPS instead")
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalculationMethodSelector(
-    selectedMethod: Int,
-    onMethodChange: (Int) -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = "Calculation method",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(calculationMethods, key = { it.id }) { method ->
-                FilterChip(
-                    selected = selectedMethod == method.id,
-                    onClick = { onMethodChange(method.id) },
-                    label = { Text(text = method.label) }
-                )
             }
         }
     }

@@ -1,0 +1,17 @@
+---
+description: Build and modify the Waqt Android app per project skill and design system
+globs:
+  - "**/*.kt"
+  - "**/*.kts"
+  - "app/**"
+---
+
+# Waqt Android
+
+Follow the **waqt-android** skill and references:
+
+- @.github/skills/waqt-android/SKILL.md
+- @.github/skills/waqt-android/references/design.md
+- @.github/skills/waqt-android/references/waqt_build_plan.html
+
+Default to Stage 1. Package `com.example.waqt`. Aladhan method `1` = Karachi.

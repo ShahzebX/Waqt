@@ -217,6 +217,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
   </div>
 </div>
 
+<div class="note" style="margin-bottom: 2rem;">
+  <strong>Revision (May 2026):</strong> This plan was corrected to match the shipped Waqt codebase (<code>com.example.waqt</code>), agent skill (<code>SKILL.md</code>), and design system (<code>design.md</code>). Key fixes: Aladhan method IDs, Qibla UX (fixed Kaaba + rotating needle), inline planner tasks (no bottom sheet), dedicated Settings screen with DataStore, and accurate package/architecture layout.
+</div>
+
 <!-- TOC -->
 <div class="toc">
   <p class="toc-heading">Contents</p>
@@ -263,10 +267,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
       <tr><td>Prayer times</td><td>Fetches today's 5 prayer times from Aladhan API based on device location</td><td><span class="badge-s1">Stage 1</span></td></tr>
       <tr><td>Countdown timer</td><td>Live countdown to the next prayer, updates every second</td><td><span class="badge-s1">Stage 1</span></td></tr>
       <tr><td>Daily planner</td><td>Time-blocked schedule auto-generated with study slots between prayers</td><td><span class="badge-s1">Stage 1</span></td></tr>
-      <tr><td>Task manager</td><td>Add tasks, assign to a time slot, mark done — persisted in Room DB</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Task manager</td><td>Inline quick-add focus items on Planner (Room schema ready; full slot assignment optional)</td><td><span class="badge-s1">Stage 1</span></td></tr>
       <tr><td>Prayer notifications</td><td>Push notification 10 min before each prayer via WorkManager</td><td><span class="badge-s1">Stage 1</span></td></tr>
-      <tr><td>Qibla compass</td><td>Custom Canvas drawn compass using device sensors, points to Makkah</td><td><span class="badge-s1">Stage 1</span></td></tr>
-      <tr><td>Settings</td><td>Manual city override, calculation method (MWL/ISNA/Karachi), Madhab</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Qibla compass</td><td>Canvas compass — fixed Kaaba at top, gold needle rotates; portrait sensor remap</td><td><span class="badge-s1">Stage 1</span></td></tr>
+      <tr><td>Settings</td><td>City override, calculation method (Karachi/ISNA/MWL), notifications toggle, display — DataStore</td><td><span class="badge-s1">Stage 1</span></td></tr>
       <tr><td>AdMob banner</td><td>Non-intrusive banner ad on home screen</td><td><span class="badge-s2">Stage 2</span></td></tr>
       <tr><td>Premium upgrade</td><td>Ad-free + custom themes + widget via one-time in-app purchase</td><td><span class="badge-s2">Stage 2</span></td></tr>
       <tr><td>Home screen widget</td><td>4×2 widget showing next prayer + countdown on the home screen</td><td><span class="badge-s2">Stage 2</span></td></tr>
@@ -283,7 +287,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 
   <div class="card-grid">
     <div class="card"><div class="card-label">Project name</div><div class="card-value">Waqt</div></div>
-    <div class="card"><div class="card-label">Package</div><div class="card-value">com.waqt.planner</div></div>
+    <div class="card"><div class="card-label">Package</div><div class="card-value">com.example.waqt</div><div class="card-sub">applicationId in app module</div></div>
     <div class="card"><div class="card-label">Min SDK</div><div class="card-value">API 26</div><div class="card-sub">Android 8.0+, 95% coverage</div></div>
     <div class="card"><div class="card-label">Language</div><div class="card-value">Kotlin + Compose</div></div>
   </div>
@@ -345,38 +349,32 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
 
   <div class="code-block">
     <div class="code-label">Folder structure</div>
-    <pre>com.waqt.planner/
+    <pre>com.example.waqt/
 ├── <span class="tp">ui/</span>
 │   ├── MainActivity.kt
-│   ├── navigation/
-│   │   └── WaqtNavGraph.kt
+│   ├── navigation/WaqtNavGraph.kt
+│   ├── components/PrayerSettingsComponents.kt
+│   ├── theme/ (Color, Type, Theme)
 │   └── screens/
-│       ├── HomeScreen.kt         <span class="cmt">// prayer times + countdown</span>
-│       ├── PlannerScreen.kt      <span class="cmt">// daily schedule with study blocks</span>
-│       ├── QiblaScreen.kt        <span class="cmt">// compass</span>
+│       ├── HomeScreen.kt
+│       ├── PlannerScreen.kt
+│       ├── QiblaScreen.kt
 │       └── SettingsScreen.kt
 ├── <span class="tp">viewmodel/</span>
-│   ├── PrayerViewModel.kt        <span class="cmt">// fetches + exposes prayer times</span>
-│   ├── PlannerViewModel.kt       <span class="cmt">// tasks + schedule logic</span>
-│   └── QiblaViewModel.kt         <span class="cmt">// sensor data</span>
+│   ├── PrayerViewModel.kt + Factory
+│   ├── PlannerViewModel.kt + Factory
+│   ├── QiblaViewModel.kt + Factory
+│   └── SettingsViewModel.kt + Factory
 ├── <span class="tp">repository/</span>
-│   ├── PrayerRepository.kt       <span class="cmt">// Retrofit + Room cache</span>
-│   └── TaskRepository.kt         <span class="cmt">// Room CRUD for tasks</span>
-├── <span class="tp">network/</span>
-│   ├── AladhanApi.kt             <span class="cmt">// Retrofit interface</span>
-│   └── PrayerResponse.kt         <span class="cmt">// JSON data classes</span>
-├── <span class="tp">database/</span>
-│   ├── WaqtDatabase.kt           <span class="cmt">// Room database</span>
-│   ├── PrayerDao.kt
-│   ├── TaskDao.kt
-│   └── entities/
-│       ├── PrayerEntity.kt
-│       └── TaskEntity.kt
-├── <span class="tp">worker/</span>
-│   └── PrayerNotificationWorker.kt
-└── <span class="tp">model/</span>
-    ├── Prayer.kt
-    └── Task.kt</pre>
+│   ├── PrayerRepository.kt
+│   └── TaskRepository.kt
+├── <span class="tp">network/</span> (AladhanApi, PrayerResponse, RetrofitInstance)
+├── <span class="tp">database/</span> (WaqtDatabase, DAOs, entities)
+├── <span class="tp">location/</span> (LocationProvider, FusedLocationProvider)
+├── <span class="tp">settings/</span> (UserSettingsDataSource, DataStore)
+├── <span class="tp">qibla/</span> (QiblaCalculator, CompassSensorProvider)
+├── <span class="tp">worker/</span> (NotificationWorker, Scheduler, BootReceiver)
+└── <span class="tp">model/</span> (Prayer, Task)</pre>
   </div>
 
   <h4>Data flow — how it all connects</h4>
@@ -397,6 +395,7 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
         <span class="arch-item">PrayerViewModel</span>
         <span class="arch-item">PlannerViewModel</span>
         <span class="arch-item">QiblaViewModel</span>
+        <span class="arch-item">SettingsViewModel</span>
       </div>
     </div>
     <div class="arch-arrow">↕ suspend functions / Flow</div>
@@ -433,7 +432,7 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
     <pre>https://api.aladhan.com/v1/timings?
   latitude=25.3960&
   longitude=68.3578&
-  method=1          <span class="cmt">// 1 = MWL, 2 = ISNA, 5 = Egypt, 18 = Karachi (best for PK)</span>
+  method=1          <span class="cmt">// Aladhan IDs used in app: 1=Karachi, 2=ISNA, 3=MWL</span>
 
 <span class="cmt">// Response (simplified):</span>
 {
@@ -459,14 +458,14 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
     <span class="kw">suspend fun</span> <span class="fn">getPrayerTimes</span>(
         @Query(<span class="str">"latitude"</span>)  latitude:  <span class="tp">Double</span>,
         @Query(<span class="str">"longitude"</span>) longitude: <span class="tp">Double</span>,
-        @Query(<span class="str">"method"</span>)    method:    <span class="tp">Int</span> = <span class="nm">18</span> <span class="cmt">// Karachi method</span>
+        @Query(<span class="str">"method"</span>)    method:    <span class="tp">Int</span> = <span class="nm">1</span> <span class="cmt">// PrayerRepository.METHOD_KARACHI</span>
     ): <span class="tp">PrayerResponse</span>
 
     @GET(<span class="str">"timingsByCity"</span>)
     <span class="kw">suspend fun</span> <span class="fn">getPrayerTimesByCity</span>(
         @Query(<span class="str">"city"</span>)    city:    <span class="tp">String</span>,
         @Query(<span class="str">"country"</span>) country: <span class="tp">String</span> = <span class="str">"PK"</span>,
-        @Query(<span class="str">"method"</span>)  method:  <span class="tp">Int</span> = <span class="nm">18</span>
+        @Query(<span class="str">"method"</span>)  method:  <span class="tp">Int</span> = <span class="nm">1</span>
     ): <span class="tp">PrayerResponse</span>
 }
 
@@ -502,8 +501,10 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
 )
 <span class="kw">data class</span> <span class="tp">DateInfo</span>(
     <span class="kw">val</span> readable: <span class="tp">String</span>,
-    <span class="kw">val</span> hijri: <span class="tp">HijriDate</span>
+    <span class="kw">val</span> hijri: <span class="tp">HijriDate</span>,
+    <span class="kw">val</span> gregorian: <span class="tp">GregorianDate</span>  <span class="cmt">// date field used for Room cache key</span>
 )
+<span class="kw">data class</span> <span class="tp">GregorianDate</span>(<span class="kw">val</span> date: <span class="tp">String</span>)  <span class="cmt">// dd-MM-yyyy</span>
 <span class="kw">data class</span> <span class="tp">HijriDate</span>(
     <span class="kw">val</span> date: <span class="tp">String</span>,
     <span class="kw">val</span> month: <span class="tp">HijriMonth</span>
@@ -524,7 +525,7 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
             <span class="kw">val</span> response = api.<span class="fn">getPrayerTimes</span>(lat, lng)
             <span class="kw">val</span> prayers = response.data.timings.<span class="fn">toEntityList</span>()
             <span class="cmt">// 2. Cache in Room</span>
-            dao.<span class="fn">insertAll</span>(prayers)
+            dao.<span class="fn">insertPrayers</span>(prayers)
             <span class="tp">Result</span>.<span class="fn">success</span>(prayers.<span class="fn">map</span> { it.<span class="fn">toDomain</span>() })
         } <span class="kw">catch</span> (e: <span class="tp">Exception</span>) {
             <span class="cmt">// 3. Offline fallback — return cached data</span>
@@ -652,41 +653,41 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
 }</pre>
   </div>
 
-  <h4>QiblaScreen.kt — Canvas compass</h4>
+  <h4>QiblaScreen.kt — fixed Kaaba target + rotating needle</h4>
+  <div class="tip"><strong>Do not</strong> pin N/E/S/W labels to the top of the screen — that confuses users when the needle aligns with Qibla. Use a <strong>fixed Kaaba (🕋) at the top</strong> as the target and a <strong>gold needle</strong> that rotates by <code>qiblaBearing - deviceAzimuth</code>. When the needle points up at the Kaaba, the user is facing Makkah.</div>
   <div class="code-block">
-    <div class="code-label">ui/screens/QiblaScreen.kt</div>
-    <pre>@Composable
-<span class="kw">fun</span> <span class="fn">QiblaScreen</span>() {
-    <span class="kw">val</span> vm: <span class="tp">QiblaViewModel</span> = viewModel()
-    <span class="kw">val</span> azimuth <span class="kw">by</span> vm.azimuth.<span class="fn">collectAsState</span>(<span class="nm">0f</span>)
-    <span class="kw">val</span> qiblaAngle <span class="kw">by</span> vm.qiblaAngle.<span class="fn">collectAsState</span>(<span class="nm">0f</span>)
+    <div class="code-label">qibla/ + QiblaViewModel</div>
+    <pre><span class="cmt">// Bearing to Makkah from user lat/lng (21.4225°N, 39.8262°E)</span>
+<span class="kw">val</span> qiblaBearing = QiblaCalculator.bearingFrom(coordinates)
+<span class="kw">val</span> needleRotation = qiblaBearing - deviceAzimuth  <span class="cmt">// 0° = facing Qibla</span>
 
-    <span class="fn">Box</span>(contentAlignment = Alignment.Center, modifier = Modifier.<span class="fn">fillMaxSize</span>()) {
-        <span class="fn">Canvas</span>(modifier = Modifier.<span class="fn">size</span>(<span class="nm">280</span>.dp)) {
-            <span class="kw">val</span> center = Offset(size.width/<span class="nm">2</span>, size.height/<span class="nm">2</span>)
-            <span class="kw">val</span> radius = size.minDimension / <span class="nm">2</span>
+<span class="cmt">// Portrait compass: remapCoordinateSystem(AXIS_X, AXIS_Z)</span>
+<span class="cmt">// Sensor: TYPE_ROTATION_VECTOR (fallback GAME_ROTATION_VECTOR)</span>
 
-            <span class="cmt">// Draw compass circle</span>
-            <span class="fn">drawCircle</span>(color = compassBg, radius = radius)
-            <span class="fn">drawCircle</span>(color = compassBorder, radius = radius,
-                       style = <span class="tp">Stroke</span>(width = <span class="nm">3</span>.dp.toPx()))
+<span class="cmt">// UI: Canvas face + rotate(needleRotation) { gold needle upward }</span>
+<span class="cmt">// Fixed Text("🕋") at TopCenter of compass — NOT rotating</span>
+<span class="cmt">// Location fallback: GPS → DataStore city → CityCoordinatesResolver</span></pre>
+  </div>
 
-            <span class="cmt">// Rotate needle to point at Qibla</span>
-            <span class="kw">val</span> angle = qiblaAngle - azimuth
-            <span class="fn">rotate</span>(angle, center) {
-                <span class="fn">drawLine</span>(
-                    color = <span class="tp">Color</span>.Green,
-                    start = center,
-                    end = Offset(center.x, center.y - radius * <span class="nm">0.8f</span>),
-                    strokeWidth = <span class="nm">6</span>.dp.toPx(),
-                    cap = <span class="tp">StrokeCap</span>.Round
-                )
-            }
-        }
-        <span class="fn">Text</span>(<span class="str">"🕋"</span>, fontSize = <span class="nm">32</span>.sp,
-             modifier = Modifier.<span class="fn">align</span>(Alignment.TopCenter).<span class="fn">padding</span>(top = <span class="nm">24</span>.dp))
-    }
-}</pre>
+  <h4>SettingsScreen.kt — DataStore-backed preferences</h4>
+  <div class="code-block">
+    <div class="code-label">ui/screens/SettingsScreen.kt</div>
+    <pre><span class="cmt">Sections (see design.md):</span>
+1. Location — city OutlinedTextField, Save &amp; update prayer times, Refresh using GPS
+2. Prayer calculation — Karachi / ISNA / MWL FilterChips (shared component)
+3. Notifications — Switch (10 min before prayer), system settings link if denied
+4. Display — theme label, app version
+
+<span class="cmt">SettingsViewModel → DataStore + PrayerRepository + WorkManager scheduler</span></pre>
+  </div>
+
+  <h4>PlannerScreen.kt — inline tasks (no bottom sheet)</h4>
+  <div class="code-block">
+    <div class="code-label">Planner task entry</div>
+    <pre><span class="cmt">STRICT: inline OutlinedTextField quick-add — press Enter to add</span>
+<span class="cmt">Do NOT use ModalBottomSheet or dialogs for tasks</span>
+<span class="cmt">generateStudySlots() in PlannerViewModel — gap thresholds 45/90/180 min</span>
+<span class="cmt">TaskEntity + TaskRepository exist; Planner may use in-memory list until wired</span></pre>
   </div>
 </div>
 
@@ -833,8 +834,8 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
         <ul class="tl-tasks">
           <li>Write generateStudySlots() algorithm in PlannerViewModel</li>
           <li>Build PlannerScreen — timeline layout with prayer anchors and study blocks</li>
-          <li>Add task creation bottom sheet — title, subject, priority</li>
-          <li>Tasks saved to Room, appear in correct time slot</li>
+          <li>Build PlannerScreen — vertical timeline + inline quick-add (no bottom sheet)</li>
+          <li>Optional: wire TaskRepository so tasks persist in Room with slot metadata</li>
         </ul>
       </div>
     </div>
@@ -858,8 +859,9 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
         <ul class="tl-tasks">
           <li>Write QiblaViewModel — register SensorManager for TYPE_ROTATION_VECTOR</li>
           <li>Calculate Qibla bearing from device location to Makkah (21.4225°N, 39.8262°E)</li>
-          <li>Build Canvas compass in QiblaScreen — needle rotates smoothly</li>
-          <li>This is your demo showstopper — practice showing it</li>
+          <li>Build QiblaCalculator + CompassSensorProvider (portrait remap)</li>
+          <li>Fixed Kaaba at top, gold needle rotates — align needle to Kaaba</li>
+          <li>Demo showstopper — practice rotating phone until "Facing Qibla"</li>
         </ul>
       </div>
     </div>
@@ -897,7 +899,7 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
   <p class="section-meta">09 · Stage 1</p>
   <h2 class="section-title">Demo Day <span class="accent-green">Checklist</span></h2>
 
-  <div class="tip"><strong>Demo order that impresses:</strong> Start with the live compass (visual wow), then show today's prayer times auto-loaded for your city, then the countdown ticking, then the planner with study blocks auto-generated, then add a task live. That arc builds excitement.</div>
+  <div class="tip"><strong>Demo order that impresses:</strong> Qibla (rotate until needle points to fixed Kaaba) → Home prayer times + live countdown → Planner study slots + inline task → Settings (change city/method, toggle notifications). Mention MVVM + Room offline cache if asked.</div>
 
   <ul class="checklist">
     <li><span class="check-box"></span><div><strong>Install on real device</strong> — never demo on emulator. Emulators crash under pressure.</div></li>
@@ -1068,7 +1070,7 @@ implementation(<span class="str">"androidx.datastore:datastore-preferences:1.1.1
   <h4>Build release AAB</h4>
   <ul class="checklist">
     <li><span class="check-box"></span><div><strong>Generate keystore</strong> — Build → Generate Signed Bundle → Create new. Save .jks file safely. You cannot re-upload without it, ever.</div></li>
-    <li><span class="check-box"></span><div><strong>targetSdk = 34</strong> — required by Play Store. Set in build.gradle.kts.</div></li>
+    <li><span class="check-box"></span><div><strong>targetSdk</strong> — meet current Play Console requirement at publish time (verify latest policy; dev builds may use higher compile/target SDK).</div></li>
     <li><span class="check-box"></span><div><strong>Build .aab not .apk</strong> — Play Store requires Android App Bundle format.</div></li>
     <li><span class="check-box"></span><div><strong>ProGuard enabled</strong> — minifyEnabled = true in release buildType. Smaller app, harder to reverse-engineer.</div></li>
   </ul>

@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.waqt.database.entities.PrayerEntity
 import com.example.waqt.model.Prayer
+import com.example.waqt.model.Task
 import com.example.waqt.repository.PrayerRepository
+import com.example.waqt.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,23 +36,33 @@ data class PlannerUiState(
     val date: LocalDate = LocalDate.now(),
     val prayers: List<Prayer> = emptyList(),
     val slots: List<StudySlot> = emptyList(),
-    val tasks: List<String> = emptyList(),
+    val tasks: List<Task> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
 class PlannerViewModel(
-    private val repository: PrayerRepository,
+    private val prayerRepository: PrayerRepository,
+    private val taskRepository: TaskRepository,
     private val currentDateProvider: () -> LocalDate = LocalDate::now
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlannerUiState())
     val uiState: StateFlow<PlannerUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            val date = currentDateProvider().toString()
+            taskRepository.observeTasksForDate(date).collect { tasks ->
+                _uiState.update { it.copy(tasks = tasks) }
+            }
+        }
+    }
+
     fun loadPlannerForToday() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val date = currentDateProvider()
-            val cached = repository.getCachedPrayers(date.toString())
+            val cached = prayerRepository.getCachedPrayers(date.toString())
             if (cached.isEmpty()) {
                 _uiState.update {
                     it.copy(
@@ -77,11 +89,20 @@ class PlannerViewModel(
         }
     }
 
-    fun addTask(task: String) {
-        val trimmed = task.trim()
+    fun addTask(title: String) {
+        val trimmed = title.trim()
         if (trimmed.isEmpty()) return
-        _uiState.update { current ->
-            current.copy(tasks = current.tasks + trimmed)
+        viewModelScope.launch {
+            taskRepository.addQuickFocusTask(
+                title = trimmed,
+                date = currentDateProvider().toString()
+            )
+        }
+    }
+
+    fun toggleTaskDone(taskId: Int, isDone: Boolean) {
+        viewModelScope.launch {
+            taskRepository.setTaskDone(taskId, isDone)
         }
     }
 

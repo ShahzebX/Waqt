@@ -14,6 +14,9 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: TaskEntity): Long
 
-    @Query("SELECT * FROM tasks WHERE date = :date ORDER BY slotStart ASC")
+    @Query("SELECT * FROM tasks WHERE date = :date ORDER BY slotStart ASC, id ASC")
     fun getTasksForDate(date: String): Flow<List<TaskEntity>>
+
+    @Query("UPDATE tasks SET isDone = :isDone WHERE id = :id")
+    suspend fun updateTaskDone(id: Int, isDone: Boolean): Int
 }

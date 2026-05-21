@@ -8,13 +8,13 @@ interface AladhanApi {
     suspend fun getPrayerTimes(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
-        @Query("method") method: Int = 18
+        @Query("method") method: Int = AladhanConstants.DEFAULT_METHOD
     ): PrayerResponse
 
     @GET("timingsByCity")
     suspend fun getPrayerTimesByCity(
         @Query("city") city: String,
-        @Query("country") country: String = "PK",
-        @Query("method") method: Int = 18
+        @Query("country") country: String = AladhanConstants.DEFAULT_COUNTRY,
+        @Query("method") method: Int = AladhanConstants.DEFAULT_METHOD
     ): PrayerResponse
 }
