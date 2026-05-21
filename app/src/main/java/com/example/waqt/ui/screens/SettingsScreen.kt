@@ -26,7 +26,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waqt.ui.components.CalculationMethodSelector
+import com.example.waqt.ui.components.PakistaniCityAutocompleteField
 import com.example.waqt.viewmodel.SettingsUiState
 import com.example.waqt.viewmodel.SettingsViewModel
 import com.example.waqt.viewmodel.SettingsViewModelFactory
@@ -85,6 +85,10 @@ fun SettingsScreen() {
             cityDraft = it
             viewModel.onCityInputChange(it)
         },
+        onCitySuggestionSelected = { selected ->
+            cityDraft = selected
+            viewModel.onCitySuggestionSelected(selected)
+        },
         onCalculationMethodSelected = viewModel::onCalculationMethodSelected,
         onNotificationsChange = { enabled ->
             if (enabled && context.needsNotificationPermission() && !context.hasNotificationPermission()) {
@@ -119,6 +123,7 @@ internal fun SettingsScreenContent(
     uiState: SettingsUiState,
     cityDraft: String,
     onCityDraftChange: (String) -> Unit,
+    onCitySuggestionSelected: (String) -> Unit = {},
     onCalculationMethodSelected: (Int) -> Unit,
     onNotificationsChange: (Boolean) -> Unit,
     onSaveCity: () -> Unit,
@@ -154,21 +159,23 @@ internal fun SettingsScreenContent(
         item {
             SettingsSectionCard(title = "Location") {
                 Text(
-                    text = "Override automatic GPS with a saved city for prayer times and Qibla.",
+                    text = when {
+                        uiState.isLoadingCities -> "Loading Pakistan cities…"
+                        uiState.pakistanCityCount > 0 ->
+                            "${uiState.pakistanCityCount} cities loaded. Pick one and save to update prayer times."
+                        else -> "Choose a city in Pakistan. Prayer times and Qibla update when you save."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
+                PakistaniCityAutocompleteField(
                     value = cityDraft,
                     onValueChange = onCityDraftChange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(SettingsCityFieldTag),
-                    label = { Text("City") },
-                    placeholder = { Text("e.g. Karachi") },
-                    singleLine = true,
-                    enabled = !uiState.isSaving
+                    suggestions = uiState.citySuggestions,
+                    onSuggestionSelected = onCitySuggestionSelected,
+                    enabled = !uiState.isSaving,
+                    fieldTestTag = SettingsCityFieldTag
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(

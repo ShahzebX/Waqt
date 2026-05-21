@@ -23,6 +23,7 @@ class SettingsViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return SettingsViewModel(
                 repository = repository,
+                cityRepository = RetrofitInstance.cityRepository,
                 locationProvider = FusedLocationProvider(appContext),
                 settingsDataSource = DataStoreUserSettingsDataSource(appContext),
                 notificationScheduler = WorkManagerPrayerNotificationScheduler(appContext)

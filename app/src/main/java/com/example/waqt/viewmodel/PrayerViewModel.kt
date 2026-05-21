@@ -12,6 +12,7 @@ import com.example.waqt.worker.PrayerNotificationScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -37,7 +38,14 @@ class PrayerViewModel(
 
     init {
         viewModelScope.launch {
+            var previousCity: String? = null
+            var previousMethod: Int? = null
             settingsDataSource.settingsFlow.collect { settings ->
+                val cityChanged = previousCity != null && previousCity != settings.city
+                val methodChanged = previousMethod != null && previousMethod != settings.calculationMethod
+                previousCity = settings.city
+                previousMethod = settings.calculationMethod
+
                 _uiState.update { current ->
                     current.copy(
                         selectedMethod = settings.calculationMethod,
@@ -45,6 +53,35 @@ class PrayerViewModel(
                         notificationsEnabled = settings.notificationsEnabled
                     )
                 }
+
+                if (cityChanged || methodChanged) {
+                    loadPrayerTimesByCity(
+                        city = settings.city,
+                        method = settings.calculationMethod
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadPrayerTimesFromSavedCity() {
+        viewModelScope.launch {
+            val settings = settingsDataSource.settingsFlow.first()
+            val cached = repository.getTodayCachedPrayers()
+            if (cached.isNotEmpty()) {
+                schedulePrayerNotifications(cached)
+                _uiState.update { current ->
+                    current.copy(
+                        prayers = cached,
+                        isLoading = false,
+                        requiresManualLocationInput = false,
+                        errorMessage = null,
+                        savedCity = settings.city,
+                        selectedMethod = settings.calculationMethod
+                    )
+                }
+            } else {
+                loadPrayerTimesByCity(city = settings.city, method = settings.calculationMethod)
             }
         }
     }

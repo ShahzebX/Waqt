@@ -17,4 +17,10 @@ interface AladhanApi {
         @Query("country") country: String = AladhanConstants.DEFAULT_COUNTRY,
         @Query("method") method: Int = AladhanConstants.DEFAULT_METHOD
     ): PrayerResponse
+
+    @GET("cityInfo")
+    suspend fun getCityInfo(
+        @Query("city") city: String,
+        @Query("country") country: String = AladhanConstants.DEFAULT_COUNTRY
+    ): CityInfoResponse
 }

@@ -146,4 +146,7 @@ private class UnusedAladhanApi : AladhanApi {
     override suspend fun getPrayerTimesByCity(city: String, country: String, method: Int): PrayerResponse {
         error("Not needed for planner slot tests")
     }
+
+    override suspend fun getCityInfo(city: String, country: String) =
+        com.example.waqt.testutil.TestCityInfo.karachi()
 }

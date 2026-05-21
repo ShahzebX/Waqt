@@ -47,6 +47,10 @@ class PrayerRepository(
         return prayerDao.getPrayersByDate(date)
     }
 
+    suspend fun getTodayCachedPrayers(): List<Prayer> {
+        return getCachedPrayers(currentDateProvider().toString()).map(PrayerEntity::toDomain)
+    }
+
     private suspend fun fetchPrayerTimes(
         apiRequest: suspend () -> PrayerResponse
     ): Result<List<Prayer>> {

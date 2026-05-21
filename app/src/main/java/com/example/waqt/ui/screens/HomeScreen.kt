@@ -105,11 +105,11 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (context.hasLocationPermission()) {
-            prayerViewModel.loadPrayerTimesFromCurrentLocation(method = selectedMethod)
-        } else {
-            prayerViewModel.onLocationPermissionRequired()
-        }
+        prayerViewModel.loadPrayerTimesFromSavedCity()
+    }
+
+    LaunchedEffect(uiState.savedCity) {
+        cityInput = uiState.savedCity
     }
 
     LaunchedEffect(Unit) {

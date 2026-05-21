@@ -5,6 +5,11 @@ import com.example.waqt.database.entities.PrayerEntity
 import com.example.waqt.location.GeoCoordinates
 import com.example.waqt.location.LocationProvider
 import com.example.waqt.network.AladhanApi
+import com.example.waqt.network.CityInfoData
+import com.example.waqt.network.CityInfoResponse
+import com.example.waqt.network.CountriesNowApi
+import com.example.waqt.network.CountryCitiesRequest
+import com.example.waqt.network.CountryCitiesResponse
 import com.example.waqt.network.DateInfo
 import com.example.waqt.network.GregorianDate
 import com.example.waqt.network.HijriDate
@@ -12,6 +17,7 @@ import com.example.waqt.network.HijriMonth
 import com.example.waqt.network.PrayerData
 import com.example.waqt.network.PrayerResponse
 import com.example.waqt.network.Timings
+import com.example.waqt.repository.CityRepository
 import com.example.waqt.repository.PrayerRepository
 import com.example.waqt.settings.InMemoryUserSettingsDataSource
 import com.example.waqt.settings.UserSettings
@@ -83,6 +89,30 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `city input exposes pakistan suggestions`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onCityInputChange("Lah")
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.citySuggestions.contains("Lahore"))
+    }
+
+    @Test
+    fun `unknown city shows suggestion error`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        viewModel.onCityInputChange("Paris")
+
+        viewModel.saveCityAndRefreshPrayerTimes()
+        advanceUntilIdle()
+
+        assertEquals(
+            "Select a city from the Pakistan suggestions.",
+            viewModel.uiState.value.errorMessage
+        )
+    }
+
+    @Test
     fun `empty city shows validation error`() = runTest(dispatcher) {
         val viewModel = createViewModel()
         viewModel.onCityInputChange("   ")
@@ -103,9 +133,23 @@ class SettingsViewModelTest {
     ): SettingsViewModel {
         return SettingsViewModel(
             repository = PrayerRepository(api = api, prayerDao = SettingsFakePrayerDao()),
+            cityRepository = CityRepository(
+                countriesNowApi = SettingsFakeCountriesNowApi(),
+                aladhanApi = api
+            ),
             locationProvider = locationProvider,
             settingsDataSource = settings,
             notificationScheduler = scheduler
+        )
+    }
+}
+
+private class SettingsFakeCountriesNowApi : CountriesNowApi {
+    override suspend fun getCitiesByCountry(request: CountryCitiesRequest): CountryCitiesResponse {
+        return CountryCitiesResponse(
+            error = false,
+            msg = "ok",
+            data = listOf("Karachi", "Lahore", "Islamabad", "Multan", "Peshawar")
         )
     }
 }
@@ -136,6 +180,18 @@ private class SettingsFakeAladhanApi(
     override suspend fun getPrayerTimesByCity(city: String, country: String, method: Int): PrayerResponse {
         error?.let { throw it }
         return checkNotNull(response)
+    }
+
+    override suspend fun getCityInfo(city: String, country: String): CityInfoResponse {
+        return CityInfoResponse(
+            code = 200,
+            status = "OK",
+            data = CityInfoData(
+                latitude = 24.8607,
+                longitude = 67.0011,
+                timezone = "Asia/Karachi"
+            )
+        )
     }
 }
 

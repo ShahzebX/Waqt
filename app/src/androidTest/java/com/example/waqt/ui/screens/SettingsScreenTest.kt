@@ -23,11 +23,13 @@ class SettingsScreenTest {
                 SettingsScreenContent(
                     uiState = SettingsUiState(
                         city = "Karachi",
+                        citySuggestions = listOf("Karachi", "Lahore"),
                         calculationMethod = PrayerRepository.METHOD_KARACHI,
                         notificationsEnabled = true
                     ),
                     cityDraft = "Karachi",
                     onCityDraftChange = {},
+                    onCitySuggestionSelected = {},
                     onCalculationMethodSelected = {},
                     onNotificationsChange = {},
                     onSaveCity = {},
@@ -53,6 +55,7 @@ class SettingsScreenTest {
                     uiState = SettingsUiState(notificationsEnabled = notificationsEnabled),
                     cityDraft = "Karachi",
                     onCityDraftChange = {},
+                    onCitySuggestionSelected = {},
                     onCalculationMethodSelected = {},
                     onNotificationsChange = { notificationsEnabled = it },
                     onSaveCity = {},

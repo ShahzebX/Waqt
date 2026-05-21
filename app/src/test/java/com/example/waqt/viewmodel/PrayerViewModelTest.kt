@@ -167,6 +167,9 @@ private class FakeAladhanApi(
         error?.let { throw it }
         return checkNotNull(response)
     }
+
+    override suspend fun getCityInfo(city: String, country: String) =
+        com.example.waqt.testutil.TestCityInfo.karachi()
 }
 
 private class FakePrayerDao : PrayerDao {

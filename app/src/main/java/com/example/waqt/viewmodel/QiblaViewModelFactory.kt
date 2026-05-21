@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.waqt.location.FusedLocationProvider
 import com.example.waqt.qibla.AndroidCompassSensorProvider
+import com.example.waqt.network.RetrofitInstance
 import com.example.waqt.settings.DataStoreUserSettingsDataSource
 
 class QiblaViewModelFactory(
@@ -17,7 +18,8 @@ class QiblaViewModelFactory(
             return QiblaViewModel(
                 locationProvider = FusedLocationProvider(appContext),
                 compassSensorProvider = AndroidCompassSensorProvider(appContext),
-                settingsDataSource = DataStoreUserSettingsDataSource(appContext)
+                settingsDataSource = DataStoreUserSettingsDataSource(appContext),
+                cityRepository = RetrofitInstance.cityRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

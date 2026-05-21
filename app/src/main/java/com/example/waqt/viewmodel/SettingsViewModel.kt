@@ -3,17 +3,22 @@ package com.example.waqt.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.waqt.location.LocationProvider
+import com.example.waqt.repository.CityRepository
 import com.example.waqt.repository.PrayerRepository
 import com.example.waqt.settings.UserSettingsDataSource
 import com.example.waqt.worker.PrayerNotificationScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
     val city: String = PrayerRepository.DEFAULT_CITY,
+    val citySuggestions: List<String> = emptyList(),
+    val pakistanCityCount: Int = 0,
+    val isLoadingCities: Boolean = true,
     val calculationMethod: Int = PrayerRepository.DEFAULT_METHOD,
     val notificationsEnabled: Boolean = true,
     val isSaving: Boolean = false,
@@ -24,6 +29,7 @@ data class SettingsUiState(
 
 class SettingsViewModel(
     private val repository: PrayerRepository,
+    private val cityRepository: CityRepository,
     private val locationProvider: LocationProvider,
     private val settingsDataSource: UserSettingsDataSource,
     private val notificationScheduler: PrayerNotificationScheduler
@@ -33,10 +39,26 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
+            val citiesResult = cityRepository.loadPakistanCities()
+            val initial = settingsDataSource.settingsFlow.first()
+            val suggestions = cityRepository.suggestionsFor(initial.city)
+            _uiState.update {
+                it.copy(
+                    city = initial.city,
+                    citySuggestions = suggestions,
+                    pakistanCityCount = cityRepository.cachedCityCount(),
+                    isLoadingCities = false,
+                    calculationMethod = initial.calculationMethod,
+                    notificationsEnabled = initial.notificationsEnabled,
+                    infoMessage = citiesResult.fold(
+                        onSuccess = { null },
+                        onFailure = { "Could not load full city list. Showing offline cities." }
+                    )
+                )
+            }
             settingsDataSource.settingsFlow.collect { settings ->
                 _uiState.update { current ->
                     current.copy(
-                        city = settings.city,
                         calculationMethod = settings.calculationMethod,
                         notificationsEnabled = settings.notificationsEnabled
                     )
@@ -46,12 +68,45 @@ class SettingsViewModel(
     }
 
     fun onCityInputChange(city: String) {
-        _uiState.update { it.copy(city = city, errorMessage = null, successMessage = null) }
+        _uiState.update {
+            it.copy(
+                city = city,
+                errorMessage = null,
+                successMessage = null
+            )
+        }
+        viewModelScope.launch {
+            val suggestions = cityRepository.suggestionsFor(city)
+            _uiState.update { it.copy(citySuggestions = suggestions) }
+        }
+    }
+
+    fun onCitySuggestionSelected(city: String) {
+        _uiState.update {
+            it.copy(
+                city = city,
+                citySuggestions = emptyList(),
+                errorMessage = null,
+                successMessage = null
+            )
+        }
     }
 
     fun onCalculationMethodSelected(method: Int) {
         viewModelScope.launch {
-            settingsDataSource.setCalculationMethod(method)
+            val city = cityRepository.resolveCityName(_uiState.value.city)
+                ?: _uiState.value.city.trim()
+            if (city.isNotEmpty()) {
+                repository.getPrayerTimesByCity(city = city, method = method)
+                    .onSuccess { prayers ->
+                        settingsDataSource.setCalculationMethod(method)
+                        if (_uiState.value.notificationsEnabled) {
+                            notificationScheduler.schedule(prayers)
+                        }
+                    }
+            } else {
+                settingsDataSource.setCalculationMethod(method)
+            }
             _uiState.update {
                 it.copy(
                     calculationMethod = method,
@@ -93,35 +148,46 @@ class SettingsViewModel(
     }
 
     fun saveCityAndRefreshPrayerTimes() {
-        val city = _uiState.value.city.trim()
-        if (city.isEmpty()) {
+        val cityInput = _uiState.value.city.trim()
+        if (cityInput.isEmpty()) {
             _uiState.update { it.copy(errorMessage = "Enter a city name.") }
             return
         }
 
         viewModelScope.launch {
+            val resolvedCity = cityRepository.resolveCityName(cityInput)
+            if (resolvedCity == null) {
+                _uiState.update {
+                    it.copy(
+                        errorMessage = "Select a city from the Pakistan suggestions.",
+                        citySuggestions = cityRepository.suggestionsFor(cityInput)
+                    )
+                }
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(
                     isSaving = true,
                     errorMessage = null,
                     successMessage = null,
-                    infoMessage = null
+                    infoMessage = null,
+                    citySuggestions = emptyList()
                 )
             }
 
-            settingsDataSource.setCity(city)
             val method = _uiState.value.calculationMethod
-
-            repository.getPrayerTimesByCity(city = city, method = method)
+            repository.getPrayerTimesByCity(city = resolvedCity, method = method)
                 .onSuccess { prayers ->
+                    settingsDataSource.setCity(resolvedCity)
                     if (_uiState.value.notificationsEnabled) {
                         notificationScheduler.schedule(prayers)
                     }
                     _uiState.update {
                         it.copy(
                             isSaving = false,
-                            city = city,
-                            successMessage = "Prayer times updated for $city."
+                            city = resolvedCity,
+                            successMessage = "Prayer times updated for $resolvedCity."
                         )
                     }
                 }

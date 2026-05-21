@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.waqt.location.GeoCoordinates
 import com.example.waqt.location.LocationProvider
-import com.example.waqt.qibla.CityCoordinatesResolver
+import com.example.waqt.repository.CityRepository
+import com.example.waqt.repository.PrayerRepository
 import com.example.waqt.qibla.CompassSensorProvider
 import com.example.waqt.qibla.CompassSensorStatus
 import com.example.waqt.qibla.QiblaCalculator
@@ -43,7 +44,8 @@ data class QiblaUiState(
 class QiblaViewModel(
     private val locationProvider: LocationProvider,
     private val compassSensorProvider: CompassSensorProvider,
-    private val settingsDataSource: UserSettingsDataSource
+    private val settingsDataSource: UserSettingsDataSource,
+    private val cityRepository: CityRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(QiblaUiState())
     val uiState: StateFlow<QiblaUiState> = _uiState.asStateFlow()
@@ -89,7 +91,7 @@ class QiblaViewModel(
     fun onLocationPermissionDenied() {
         viewModelScope.launch {
             val settings = settingsDataSource.settingsFlow.first()
-            val cityCoordinates = CityCoordinatesResolver.resolve(settings.city)
+            val cityCoordinates = cityRepository.coordinatesFor(settings.city)
             if (cityCoordinates != null) {
                 applyCoordinates(
                     coordinates = cityCoordinates,
@@ -98,7 +100,8 @@ class QiblaViewModel(
                     infoMessage = locationDeniedUsingCityMessage
                 )
             } else {
-                val fallback = CityCoordinatesResolver.defaultFallback()
+                val fallback = cityRepository.coordinatesFor(PrayerRepository.DEFAULT_CITY)
+                    ?: GeoCoordinates(24.8607, 67.0011)
                 applyCoordinates(
                     coordinates = fallback,
                     source = QiblaLocationSource.DefaultCity,
@@ -123,7 +126,7 @@ class QiblaViewModel(
 
     private suspend fun onLocationUnavailable() {
         val settings = settingsDataSource.settingsFlow.first()
-        val cityCoordinates = CityCoordinatesResolver.resolve(settings.city)
+        val cityCoordinates = cityRepository.coordinatesFor(settings.city)
         if (cityCoordinates != null) {
             applyCoordinates(
                 coordinates = cityCoordinates,
@@ -132,7 +135,8 @@ class QiblaViewModel(
                 infoMessage = gpsUnavailableUsingCityMessage
             )
         } else {
-            val fallback = CityCoordinatesResolver.defaultFallback()
+            val fallback = cityRepository.coordinatesFor(PrayerRepository.DEFAULT_CITY)
+                ?: GeoCoordinates(24.8607, 67.0011)
             applyCoordinates(
                 coordinates = fallback,
                 source = QiblaLocationSource.DefaultCity,

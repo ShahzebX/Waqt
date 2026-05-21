@@ -2,6 +2,13 @@ package com.example.waqt.viewmodel
 
 import com.example.waqt.location.GeoCoordinates
 import com.example.waqt.location.LocationProvider
+import com.example.waqt.network.AladhanApi
+import com.example.waqt.network.CityInfoData
+import com.example.waqt.network.CityInfoResponse
+import com.example.waqt.network.CountriesNowApi
+import com.example.waqt.network.CountryCitiesRequest
+import com.example.waqt.network.CountryCitiesResponse
+import com.example.waqt.network.PrayerResponse
 import com.example.waqt.qibla.CompassSensorProvider
 import com.example.waqt.qibla.CompassSensorStatus
 import com.example.waqt.settings.InMemoryUserSettingsDataSource
@@ -93,7 +100,11 @@ class QiblaViewModelTest {
         return QiblaViewModel(
             locationProvider = locationProvider,
             compassSensorProvider = compassSensorProvider,
-            settingsDataSource = InMemoryUserSettingsDataSource(settings)
+            settingsDataSource = InMemoryUserSettingsDataSource(settings),
+            cityRepository = com.example.waqt.repository.CityRepository(
+                countriesNowApi = QiblaFakeCountriesNowApi(),
+                aladhanApi = QiblaFakeAladhanApi()
+            )
         )
     }
 }
@@ -108,4 +119,36 @@ private class UnavailableCompassSensorProvider : CompassSensorProvider {
     override val status: CompassSensorStatus = CompassSensorStatus.Unavailable
 
     override fun azimuthDegrees(): Flow<Float> = emptyFlow()
+}
+
+private class QiblaFakeCountriesNowApi : CountriesNowApi {
+    override suspend fun getCitiesByCountry(request: CountryCitiesRequest): CountryCitiesResponse {
+        return CountryCitiesResponse(
+            error = false,
+            msg = "ok",
+            data = listOf("Karachi", "Lahore")
+        )
+    }
+}
+
+private class QiblaFakeAladhanApi : AladhanApi {
+    override suspend fun getPrayerTimes(latitude: Double, longitude: Double, method: Int): PrayerResponse {
+        error("Not used")
+    }
+
+    override suspend fun getPrayerTimesByCity(city: String, country: String, method: Int): PrayerResponse {
+        error("Not used")
+    }
+
+    override suspend fun getCityInfo(city: String, country: String): CityInfoResponse {
+        return CityInfoResponse(
+            code = 200,
+            status = "OK",
+            data = CityInfoData(
+                latitude = 24.8607,
+                longitude = 67.0011,
+                timezone = "Asia/Karachi"
+            )
+        )
+    }
 }
